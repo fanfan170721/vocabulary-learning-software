@@ -1,0 +1,12 @@
+{
+  "version": "achievements-0.1.0",
+  "definitions": [
+    {"id": "twenty.first_use", "title": "开始学习", "description": "首次开始20词学习。", "threshold": 1, "metric": "started_sessions"},
+    {"id": "twenty.practice.100", "title": "练习100词", "description": "完成轮次累计练习100词；旧轮重做不计。", "threshold": 100, "metric": "achievement_practice_words"},
+    {"id": "twenty.practice.200", "title": "练习200词", "description": "完成轮次累计练习200词；旧轮重做不计。", "threshold": 200, "metric": "achievement_practice_words"},
+    {"id": "twenty.practice.500", "title": "练习500词", "description": "完成轮次累计练习500词；旧轮重做不计。", "threshold": 500, "metric": "achievement_practice_words"},
+    {"id": "twenty.practice.1000", "title": "练习1000词", "description": "完成轮次累计练习1000词；旧轮重做不计。", "threshold": 1000, "metric": "achievement_practice_words"},
+    {"id": "twenty.practice.2000", "title": "练习2000词", "description": "完成轮次累计练习2000词；旧轮重做不计。", "threshold": 2000, "metric": "achievement_practice_words"},
+    {"id": "twenty.practice.3000", "title": "练习3000词", "description": "完成轮次累计练习3000词；旧轮重做不计。", "threshold": 3000, "metric": "achievement_practice_words"}
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "background": "#F7F9FB",
+  "surface": "#FFFFFF",
+  "text": "#18191C",
+  "muted": "#717985",
+  "blue": "#00AEEC",
+  "blue_dark": "#007CA8",
+  "blue_light": "#EDF9FD",
+  "pink": "#FB7299",
+  "pink_light": "#FFF0F5",
+  "border": "#E9EDF2",
+  "error": "#C43D4A",
+  "success": "#208264",
+  "font_family": "Microsoft YaHei UI",
+  "font_size": 14,
+  "radius": 12,
+  "spacing": 18,
+  "module_accents": {
+    "learning": "#00A5D9",
+    "mistakes": "#EC7898",
+    "history": "#9B8BD0",
+    "achievements": "#D5A344",
+    "goals": "#55A797",
+    "queue": "#5BAEB1",
+    "settings": "#8492A6",
+    "assessment": "#9B8BD0"
+  },
+  "module_tints": {
+    "learning": "#EDF9FD",
+    "mistakes": "#FFF2F6",
+    "history": "#F5F2FC",
+    "achievements": "#FFF9EC",
+    "goals": "#EFF8F4",
+    "queue": "#EEF8F8",
+    "settings": "#F2F5F8",
+    "assessment": "#F5F2FC"
+  },
+  "animation_duration": 5.0,
+  "confetti_count": 100,
+  "confetti_gravity": 540,
+  "confetti_colors": ["#00AEEC", "#FB7299", "#F8C85A", "#7ECDB8", "#8C91E8"]
+}

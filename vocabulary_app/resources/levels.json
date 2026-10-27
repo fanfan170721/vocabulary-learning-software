@@ -1,0 +1,235 @@
+{
+  "version": "levels-0.2.0",
+  "calibrated": false,
+  "levels": [
+    {
+      "level": 1,
+      "title": "起步",
+      "estimated_range": [
+        0,
+        250
+      ],
+      "description": "问候、日常交流及具体事物；项目内初始档位，未标准化校准。",
+      "seed_available": true,
+      "content_word_count": 90
+    },
+    {
+      "level": 2,
+      "title": "生活基础",
+      "estimated_range": [
+        250,
+        500
+      ],
+      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "seed_available": true,
+      "content_word_count": 90,
+      "frequency_rank_max": 1000
+    },
+    {
+      "level": 3,
+      "title": "基础表达",
+      "estimated_range": [
+        500,
+        900
+      ],
+      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "seed_available": true,
+      "content_word_count": 90,
+      "frequency_rank_max": 1700
+    },
+    {
+      "level": 4,
+      "title": "日常拓展",
+      "estimated_range": [
+        900,
+        1500
+      ],
+      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "seed_available": true,
+      "content_word_count": 90,
+      "frequency_rank_max": 2600
+    },
+    {
+      "level": 5,
+      "title": "一般表达",
+      "estimated_range": [
+        1500,
+        2300
+      ],
+      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "seed_available": true,
+      "content_word_count": 90,
+      "frequency_rank_max": 3800
+    },
+    {
+      "level": 6,
+      "title": "表达拓展",
+      "estimated_range": [
+        2300,
+        3200
+      ],
+      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "seed_available": true,
+      "content_word_count": 90,
+      "frequency_rank_max": 5400
+    },
+    {
+      "level": 7,
+      "title": "进阶一",
+      "estimated_range": [
+        3200,
+        4200
+      ],
+      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "seed_available": true,
+      "content_word_count": 60,
+      "frequency_rank_max": 7500
+    },
+    {
+      "level": 8,
+      "title": "进阶二",
+      "estimated_range": [
+        4200,
+        5500
+      ],
+      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "seed_available": true,
+      "content_word_count": 60,
+      "frequency_rank_max": 10000
+    },
+    {
+      "level": 9,
+      "title": "进阶三",
+      "estimated_range": [
+        5500,
+        7000
+      ],
+      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "seed_available": true,
+      "content_word_count": 60,
+      "frequency_rank_max": 14000
+    },
+    {
+      "level": 10,
+      "title": "拓展一",
+      "estimated_range": [
+        7000,
+        8500
+      ],
+      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "seed_available": true,
+      "content_word_count": 60,
+      "frequency_rank_max": 20000
+    },
+    {
+      "level": 11,
+      "title": "拓展二",
+      "estimated_range": [
+        8500,
+        10500
+      ],
+      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "seed_available": true,
+      "content_word_count": 60,
+      "frequency_rank_max": 28000
+    },
+    {
+      "level": 12,
+      "title": "拓展三",
+      "estimated_range": [
+        10500,
+        13000
+      ],
+      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "seed_available": true,
+      "content_word_count": 60,
+      "frequency_rank_max": 36000
+    },
+    {
+      "level": 13,
+      "title": "深入一",
+      "estimated_range": [
+        13000,
+        16000
+      ],
+      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "seed_available": true,
+      "content_word_count": 60,
+      "frequency_rank_max": 44000
+    },
+    {
+      "level": 14,
+      "title": "深入二",
+      "estimated_range": [
+        16000,
+        20000
+      ],
+      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "seed_available": true,
+      "content_word_count": 60,
+      "frequency_rank_max": null
+    },
+    {
+      "level": 15,
+      "title": "专业术语",
+      "estimated_range": [
+        20000,
+        30000
+      ],
+      "description": "跨医学、物理、化学、工程与数学的精选专业术语；并非全球最难词汇认证，未标准化校准。",
+      "seed_available": true,
+      "content_word_count": 60
+    }
+  ],
+  "self_ratings": [
+    {
+      "id": "beginner",
+      "label": "刚开始学",
+      "level": 1,
+      "notes": "用户自评，仅作为初始内容推荐；其他未测技能保持未知。"
+    },
+    {
+      "id": "a_little",
+      "label": "只会一点",
+      "level": 2,
+      "notes": "用户自评，仅作为初始内容推荐；其他未测技能保持未知。"
+    },
+    {
+      "id": "elementary",
+      "label": "初级",
+      "level": 3,
+      "notes": "用户自评，仅作为初始内容推荐；其他未测技能保持未知。"
+    },
+    {
+      "id": "intermediate",
+      "label": "中级",
+      "level": 5,
+      "notes": "用户自评，仅作为初始内容推荐；其他未测技能保持未知。"
+    },
+    {
+      "id": "advanced",
+      "label": "高级",
+      "level": 8,
+      "notes": "用户自评；只用于初始推荐，不能据此推断具体已会词或未测技能。"
+    },
+    {
+      "id": "fluent",
+      "label": "熟练",
+      "level": 11,
+      "notes": "用户自评；流利程度与词义识别、阅读、写作等能力分别记录。"
+    },
+    {
+      "id": "native",
+      "label": "本地人",
+      "level": 12,
+      "notes": "语言背景入口，临时推荐档位可调整；不代表所有英语技能均为最高级。"
+    },
+    {
+      "id": "professional",
+      "label": "专业英语学习人",
+      "level": 12,
+      "notes": "学习背景入口，临时推荐档位可调整；与本地人不是严格高低关系，未测技能保持未知。"
+    }
+  ],
+  "classification": "日常交流精选、词频与抽象性启发式、专业术语精选；未标准化校准"
+}
