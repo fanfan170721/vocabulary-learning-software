@@ -1,26 +1,27 @@
-# 架构与数据
+# Architecture and data
 
-`ui.py` 负责独立场景和首次引导，`animations.py` 负责动画。`core.py` 保存学习规则、目标计算和结算，`assessment.py` 保存测评选题与估计规则，两者独立于 Qt。`storage.py` 提供 SQLite 持久化。`speech.py` 仅选择 Windows SAPI 本地引擎。首版没有 Web 服务、云同步、账号或模型请求。
+`ui.py` handles separate scenes and first-use onboarding; `animations.py` handles animation. `core.py` owns learning rules, goal calculations, and completion accounting. `assessment.py` owns question selection and estimation rules. Both are independent of Qt. `storage.py` provides SQLite persistence. `speech.py` selects only the local Windows SAPI engine. The initial release has no web service, cloud synchronization, accounts, or model requests.
 
 ```mermaid
 flowchart LR
-  UI[桌面界面] --> CORE[学习业务]
-  CORE --> DB[本地 SQLite]
-  CORE --> CONTENT[版本化词库与配置]
-  UI --> SPEECH[Windows 本地发音]
+  UI[Desktop interface] --> CORE[Learning rules]
+  CORE --> DB[Local SQLite]
+  CORE --> CONTENT[Versioned vocabulary and configuration]
+  UI --> SPEECH[Local Windows pronunciation]
 ```
 
-用户档案、学习会话、每次作答、掌握词集合、错题、目标快照、成就获得记录和待学队列通过稳定 ID 关联。会话保存当时的完整词条和题目快照；之后修改词库不会改变旧轮次。目标保存自己的词集版本和分母。
+Stable IDs link profiles, learning sessions, individual answers, the mastered word set, mistakes, goal snapshots, earned achievements, and the study queue. Sessions save complete word and question snapshots from their creation time, so later catalog edits do not change old sessions. Each goal saves its own word set version and denominator.
 
-SQLite schema v1 使用 `records(kind, id, data)` 复合主键存放各类 JSON 记录。类型分别为 profile、settings、session、assessment、mastered、goal、earned、queue、event。这样只需一个清楚的存储入口，业务层统一验证数据，不让界面拼接 SQL。兼容旧 schema 升级前保存备份，未知旧结构拒绝修改。
+The English catalog is versioned `content-0.2.1-en`. Legacy stock text is translated for presentation through exact text mappings; original saved definitions, answer choices, responses, and scoring evidence remain intact. Personal names and user-written text are preserved. Legacy self-rating labels and language metadata are normalized for the English interface. When an older interface text file contains a complete copy of the former defaults, stock values adopt the English defaults while personal edits remain unchanged.
 
-测评与学习会话分开。测评保存题库、等级配置和算法版本、实际题目与选项、每次作答、完成状态及参考结果，不给已掌握集合或学习成就加分。首次引导步骤保存在档案中；最后创建目标与完成引导在同一事务内提交。旧版已完成引导的档案继续进入主页，未完学习保留；重新测评需用户明确采用推荐难度，不重设旧目标基线。
+SQLite schema v1 stores JSON records under the composite primary key `records(kind, id, data)`. Record kinds are profile, settings, session, assessment, mastered, goal, earned, queue, and event. A single storage entry point keeps business validation consistent and prevents the interface from assembling SQL. Compatible older schemas are backed up before migration; unknown legacy structures are rejected without modification.
 
-整轮完成、净新增去重、目标更新和成就获得在同一 SQLite 事务中提交。重复完成同一个会话不会再次增加计数。重做历史轮创建新的练习记录，保留词表与原始题目，不增加唯一词数或练习成就。
+Assessments are separate from learning sessions. An assessment saves the question bank, level configuration and algorithm versions, actual questions and options, individual answers, completion status, and reference result. It adds nothing to mastered words or learning achievements. Onboarding steps are saved in the profile. Creating the final goal and completing onboarding commit in one transaction. Previously onboarded profiles continue to the home page with unfinished learning preserved. Adopting a reassessment's recommended difficulty requires an explicit choice and does not reset existing goal baselines.
 
-默认个人数据目录为 `%LOCALAPPDATA%\VocabularyLearning`，不在安装目录。内容资源放在 `vocabulary_app/resources`。`--data-dir` 可为演示或验证指定独立档案，避免混入真实学习记录。同一档案只允许一个应用实例。
+Session completion, deduplication of net new words, goal updates, and achievement awards commit in one SQLite transaction. Completing the same session again does not add counts. Replaying a historical session creates a new practice record, keeps the word list and original questions, and does not add unique words or practice achievements.
 
-导出是带 schemaVersion 的 JSON；导入先验证格式、引用与状态，再备份当前数据并替换。首版不保存任何服务商凭据。不要用编辑 JSON 的方式修改结算数据；需要纠正学习规则时修改业务层并运行测试。
+The default personal data directory is `%LOCALAPPDATA%\VocabularyLearning`, outside the installation directory. Content resources live in `vocabulary_app/resources`. `--data-dir` selects a separate profile for demos or verification without changing real study records. Only one application instance may use a profile at a time.
 
-未来阅读、写作、评测、AI 与网页端复用稳定词条、会话事件、规则及内容格式；网页界面和浏览器存储另行实现。
+Exports are JSON with a schemaVersion. Import validates format, references, and state, then backs up and replaces current data. The initial release stores no provider credentials. Do not edit completion data directly in JSON; correct learning rules in the business layer and run the tests.
 
+Future reading, writing, assessment, AI, and web modules can reuse stable word IDs, session events, rules, and content formats. A web interface and browser storage will be implemented separately.

@@ -28,11 +28,11 @@ class Store:
         with self.connect() as connection:
             version = connection.execute("PRAGMA user_version").fetchone()[0]
             if version > SCHEMA_VERSION:
-                raise ValueError("学习档案来自更新版本的软件，请先升级。")
+                raise ValueError("The learning archive was created by a newer application version. Upgrade first.")
             tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
             if version == 0 and tables:
                 if tables != {"records"} or [row[1] for row in connection.execute("PRAGMA table_info(records)")] != ["kind", "id", "data"]:
-                    raise ValueError("旧档案结构不兼容。请保留原文件并使用对应版本导出后再导入。")
+                    raise ValueError("The old archive structure is incompatible. Keep the original file and export it with the corresponding application version before importing.")
                 self.backup("before-schema-1")
             connection.execute(
                 "CREATE TABLE IF NOT EXISTS records ("

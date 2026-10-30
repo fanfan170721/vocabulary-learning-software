@@ -6,6 +6,7 @@ from pathlib import Path
 import sqlite3
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from vocabulary_app.core import AppService
 from vocabulary_app.storage import Store
@@ -20,16 +21,16 @@ class LearningRulesTests(unittest.TestCase):
         self.words = [{
             "id": f"test-{index}", "lemma": f"testword{index}", "language": "en",
             "phonetic": "/test/", "level": 2,
-            "senses": [{"id": f"sense-{index}", "pos": "noun", "definition": f"测试含义{index}", "language": "zh-CN"}],
+            "senses": [{"id": f"sense-{index}", "pos": "noun", "definition": f"Test meaning {index}", "language": "en"}],
             "source": "test fixture", "license": "test-only",
         } for index in range(80)]
         self.content = {"version": "test-1", "words": self.words, "word_sets": [
-            {"id": "test-set", "name": "测试词集", "kind": "test", "version": "test-1", "complete": True,
+            {"id": "test-set", "name": "Test word set", "kind": "test", "version": "test-1", "complete": True,
              "word_ids": [word["id"] for word in self.words[:40]]},
-            {"id": "empty", "name": "空词集", "version": "test-1", "complete": True, "word_ids": []},
-            {"id": "partial", "name": "不完整词集", "version": "test-1", "complete": False,
+            {"id": "empty", "name": "Empty word set", "version": "test-1", "complete": True, "word_ids": []},
+            {"id": "partial", "name": "Incomplete word set", "version": "test-1", "complete": False,
              "word_ids": [self.words[0]["id"]]},
-            {"id": "missing", "name": "缺词词集", "version": "test-1", "complete": True,
+            {"id": "missing", "name": "Word set with missing entries", "version": "test-1", "complete": True,
              "word_ids": [self.words[0]["id"], "absent"]},
         ]}
         self.write_content()
@@ -158,7 +159,7 @@ class LearningRulesTests(unittest.TestCase):
 
     def test_mastered_words_cannot_be_added_to_new_word_queue(self):
         completed = self.finish(self.service.start_session())
-        with self.assertRaisesRegex(ValueError, "该词已掌握"):
+        with self.assertRaisesRegex(ValueError, "This word is already mastered"):
             self.service.enqueue(completed["words"][0]["id"])
         self.assertEqual(self.service.queue(), [])
 
@@ -188,7 +189,7 @@ class LearningRulesTests(unittest.TestCase):
         self.assertTrue(current["completed"])
 
     def test_goal_remaining_one_does_not_complete(self):
-        self.content["word_sets"].append({"id": "twenty-one", "name": "21词测试", "version": "test-1", "kind": "test", "complete": True,
+        self.content["word_sets"].append({"id": "twenty-one", "name": "21-word test", "version": "test-1", "kind": "test", "complete": True,
                                           "word_ids": [w["id"] for w in self.words[:21]]})
         self.write_content()
         self.reopen()
@@ -212,7 +213,7 @@ class LearningRulesTests(unittest.TestCase):
         self.assertFalse(goal["completed"])
 
     def test_other_valid_meanings_are_never_distractors(self):
-        self.words[0]["senses"].append({"id": "alternate", "pos": "verb", "definition": "测试含义1", "language": "zh-CN"})
+        self.words[0]["senses"].append({"id": "alternate", "pos": "verb", "definition": "Test meaning 1", "language": "en"})
         self.write_content()
         self.reopen()
         self.service.enqueue("test-0")
@@ -220,14 +221,14 @@ class LearningRulesTests(unittest.TestCase):
         session = self.service.start_session()
         question = next(q for q in session["questions"] if q["word_id"] == "test-0")
         distractors = {o["text"] for o in question["options"] if o["id"] != question["correct_option_id"]}
-        self.assertNotIn("测试含义1", distractors)
-        self.assertNotIn("测试含义0", distractors)
+        self.assertNotIn("Test meaning 1", distractors)
+        self.assertNotIn("Test meaning 0", distractors)
 
     def test_content_update_does_not_rewrite_history_or_goal_version(self):
         self.service.configure_goal("word_set", word_set_id="test-set")
         original = self.finish(self.service.start_session())
         self.content["version"] = "test-2"
-        self.words[0]["senses"][0]["definition"] = "新版释义"
+        self.words[0]["senses"][0]["definition"] = "Updated definition"
         self.content["word_sets"][0]["version"] = "test-2"
         self.content["word_sets"][0]["word_ids"] = [word["id"] for word in self.words]
         self.write_content()
@@ -252,6 +253,33 @@ class LearningRulesTests(unittest.TestCase):
         self.assertEqual(destination.mistakes(), self.service.mistakes())
         self.assertEqual(destination.session()["question"], unfinished["question"])
         destination.close()
+
+    def test_legacy_unknown_answers_import_and_display_without_rewriting_evidence(self):
+        session = self.to_quiz(self.service.start_session())
+        self.service.answer(session["id"], None)
+        archive = self.root / "legacy-language.json"
+        self.service.export_data(archive)
+        payload = json.loads(archive.read_text(encoding="utf-8"))
+        stored_session = next(record["data"] for record in payload["records"] if record["kind"] == "session")
+        legacy_unknown = "\u6211\u4e0d\u4f1a"
+        stored_session["attempts"][0]["choice_text"] = legacy_unknown
+        stored_session["round_results"][0]["choice_text"] = legacy_unknown
+        profile = next(record["data"] for record in payload["records"] if record["kind"] == "profile")
+        profile.update(name="\u82f9\u679c", self_rating="\u521d\u7ea7", interface_language="zh-CN", meaning_language="zh-CN")
+        archive.write_text(json.dumps(payload), encoding="utf-8")
+        self.service.import_data(archive)
+        with patch("vocabulary_app.core._localized_text", side_effect=lambda text: "Apple" if text == "\u82f9\u679c" else text):
+            view = self.service.snapshot()
+        self.assertEqual(view["profile"]["name"], "\u82f9\u679c")
+        self.assertEqual(view["profile"]["self_rating"], "Beginner")
+        self.assertEqual(view["profile"]["interface_language"], "en")
+        self.assertEqual(view["active_session"]["attempts"][0]["choice_text"], "I don't know")
+        self.assertEqual(view["active_session"]["attempts"][0]["option_id"], None)
+        self.assertFalse(view["active_session"]["attempts"][0]["correct"])
+        with self.service.store.connect() as connection:
+            persisted = self.service.store.get(connection, "session", stored_session["id"])
+        self.assertEqual(persisted["attempts"][0]["choice_text"], legacy_unknown)
+        self.assertEqual(persisted["word_stats"], stored_session["word_stats"])
 
     def test_export_preserves_queue_goal_and_history_order(self):
         self.finish(self.service.start_session())
@@ -345,9 +373,9 @@ class LearningRulesTests(unittest.TestCase):
 
     def test_configured_achievement_counts_original_rounds_only(self):
         definitions = {"version": "test", "definitions": [
-            {"id": "configured.first", "title": "开始", "description": "首次建轮", "metric": "started_sessions", "threshold": 1},
-            {"id": "configured.twenty", "title": "20词", "description": "完成新轮次", "metric": "achievement_practice_words", "threshold": 20},
-            {"id": "configured.forty", "title": "40词", "description": "完成两轮", "metric": "achievement_practice_words", "threshold": 40},
+            {"id": "configured.first", "title": "Start", "description": "Create the first session", "metric": "started_sessions", "threshold": 1},
+            {"id": "configured.twenty", "title": "20 words", "description": "Complete a new session", "metric": "achievement_practice_words", "threshold": 20},
+            {"id": "configured.forty", "title": "40 words", "description": "Complete two sessions", "metric": "achievement_practice_words", "threshold": 40},
         ]}
         path = self.content_dir / "achievements.json"
         path.write_text(json.dumps(definitions), encoding="utf-8")
@@ -365,7 +393,7 @@ class LearningRulesTests(unittest.TestCase):
         self.assertEqual(len([a for a in self.service.achievements() if a["earned"]]), 3)
 
     def test_cet4_cannot_use_a_small_test_set(self):
-        with self.assertRaisesRegex(ValueError, "测试词集"):
+        with self.assertRaisesRegex(ValueError, "test word set"):
             self.service.configure_goal("cet4", word_set_id="test-set")
 
     def test_invalid_goal_completion_import_is_rejected(self):
@@ -412,7 +440,7 @@ class LearningRulesTests(unittest.TestCase):
         self.content["words"] = self.words[:19]
         self.write_content()
         self.reopen()
-        with self.assertRaisesRegex(ValueError, "不足 20"):
+        with self.assertRaisesRegex(ValueError, "at least 20"):
             self.service.start_session()
         self.assertIsNone(self.service.snapshot()["active_session"])
 

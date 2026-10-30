@@ -1,18 +1,17 @@
-# 产品路线图
+# Product roadmap
 
-产品功能要求见 [PRODUCT_REQUIREMENTS.md](PRODUCT_REQUIREMENTS.md)。当前只实施阶段 0 和阶段 1。
+See [PRODUCT_REQUIREMENTS.md](PRODUCT_REQUIREMENTS.md) for feature requirements. Only phases 0 and 1 are currently implemented.
 
-| 阶段 | 范围 | 开始前确认 |
+| Phase | Scope | Confirm before starting |
 |---|---|---|
-| 0 | 决定、架构、数据关系、计划、验收 | 已确认事项不重复询问 |
-| 1 | 20 词离线完整流程、主页模块入口与独立场景、首次自评/测评/目标引导、20/50/100/200/500 题测评、15 级实际词条、本地档案、错题/历史、目标、基础成就、导入导出、Windows 应用包 | 普通目标、成就口径与新引导已确认 |
-| 2 | 15 级和测评算法校准、参考能力换算、持续内容扩充、阶段奖励、3 种趣味进度、可旋转 3D 展示柜 | 重测如何影响活动目标基线、里程碑奖励、旅行路线 |
-| 3 | 分级书库、章节续读、未读随机文章、全文有效词统计、查词与待学队列、读后选择/填空题、解释与完成结算 | 阅读 20 分钟是否含答题、是否需全对、有效词范围 |
-| 4 | 用户自备 API 密钥、凭据隔离、连接状态、目标自然语言分析、中文占位推荐、作文批改与版本历史、独立祝贺信 | 提供商、请求路径、写作完成事件、难词等级 |
-| 可选 | 私人演示授权、过期撤销、预算原子预留、并发与重试限制 | 必须另行明确启用，不作为自备密钥失败回退 |
-| 后续 | 更多语言/模式、内容包、美术、成就；网页界面与存储适配 | 账号、同步、托管、公开部署由所有者决定 |
+| 0 | Decisions, architecture, data relationships, planning, acceptance | Do not ask again about confirmed decisions. |
+| 1 | Complete offline 20-word cycle, home module entry points and separate scenes, first-use self-rating/assessment/goal onboarding, 20/50/100/200/500-question assessments, actual entries across 15 levels, local profiles, mistakes/history, goals, basic achievements, import/export, Windows bundle | Ordinary goals, achievement counting, and new onboarding are confirmed. |
+| 2 | Calibrate 15 levels and assessment algorithms, reference proficiency conversion, continued content expansion, milestone rewards, three playful progress views, rotatable 3D achievement cabinet | How reassessment affects active goal baselines, milestone rewards, travel route. |
+| 3 | Graded library, chapter resumption, random unread articles, valid-word counts throughout texts, lookup and study queue, post-reading choice/fill-in questions, explanations and completion accounting | Whether the 20-minute reading limit includes answering, whether all answers must be correct, which words count. |
+| 4 | User-supplied API keys, isolated credentials, connection status, natural-language goal analysis, native-language placeholder suggestions, essay corrections and version history, separate congratulatory letter | Providers, request paths, writing completion events, difficult-word levels. |
+| Optional | Private demo authorization, expiry and revocation, atomic budget reservation, concurrency and retry limits | Separate explicit activation; never a fallback when a personal key fails. |
+| Later | More languages/modes, content packs, artwork, achievements; web interface and storage adapter | The owner decides accounts, synchronization, hosting, and public deployment. |
 
-保留的具体方向：北京到多伦多旅行、42.195 公里马拉松、公元 1 年至当年的历史时间轴；三者使用同一主进度。历史内容需来源，不编造事件年份。阅读保留名著、科普和社会题材。写作原稿中自行使用的库内难词按规则登记，即使 AI 关闭也成立；中文占位和尚未学习的生成建议不当作原本已会证据。
+Retained directions include travel from Beijing to Toronto, a 42.195 km marathon, and a historical timeline from AD 1 to the current year, all using the same primary progress. Historical content needs sources; do not invent event dates. Reading retains classics, popular science, and social topics. Difficult catalog words independently used in an original draft can count under the rules even when AI is off. Native-language placeholders and generated suggestions that have not been learned are not evidence of already-known words.
 
-公开版仅使用用户自己的服务商额度。开发者密钥不进入仓库、安装包或下载配置；AI 未配置、失效、额度不足时普通学习继续，不产生共享额度回退。
-
+A public release uses only each user's own provider quota. Developer keys stay out of the repository, bundles, and download configuration. If AI is missing, invalid, or out of quota, ordinary learning continues without fallback to shared quota.

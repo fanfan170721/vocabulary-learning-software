@@ -1,57 +1,57 @@
-# 产品需求
+# Product requirements
 
-面向中文母语学习者的英语单词学习软件。首发 Windows 桌面版，以 Python、PySide6、SQLite 实现；业务、内容和界面分离，为其他母语、目标语言及网页界面保留扩展能力。项目非盈利，无广告、订阅或内购。
+An English vocabulary learning app with an English interface and English definitions. The initial Windows desktop release uses Python, PySide6, and SQLite. Business rules, content, and interface are separate to allow additional native languages, learning languages, and a web interface later. The project is nonprofit, with no advertising, subscriptions, or in-app purchases.
 
-## 界面与内容维护
+## Interface and content maintenance
 
-白色为主要背景，黑色正文，蓝色强调操作与选中状态，粉色提示新词。各模块可有少量独立配色和图标点缀，避免大面积装饰。文案、主题、词库、等级、成就配置独立维护。文案可在软件设置内修改。
+Use a predominantly white background, black body text, blue emphasis for actions and selection, and pink for new words. Modules may have small independent color and icon accents without large decorative areas. Maintain interface text, themes, vocabulary, levels, and achievements as separate configurations. Text can be edited in Settings.
 
-主页作为模块入口；进入学习、错题、历史、目标、成就或设置后使用独立场景，返回主页切换。学习中不展示其他模块导航。当前目标进度常驻主页底部。
+The home page opens modules. Learning, mistakes, history, goals, achievements, and settings each use a separate scene; return home to switch modules. Other module navigation is absent during learning. Current goal progress remains at the bottom of the home page.
 
-## 水平与首次引导
+## Level and first-use onboarding
 
-首次启动先选择水平：刚开始学、只会一点、初级、中级、高级、熟练、本地人、专业英语学习人。可按自评快速开始，或自行选择 20、50、100、200、500 题进行词义识别测评，再确认学习起点和目标。
+On first launch, choose a level: Just starting, Know a little, Beginner, Intermediate, Advanced, Proficient, Native speaker, or Professional English learner. Start quickly from a self-rating, or choose a meaning recognition assessment of 20, 50, 100, 200, or 500 questions, then confirm a learning baseline and goal.
 
-测评采用四选一及独立“不会”选项，同次不重复词条，每题保存。难度随作答调整，结果给出推荐内容等级与词量参考范围，不代表听说读写的标准化认证。测评不增加学习词数、完成轮次或练习成就。已有档案可重新测评，明确采用结果后调整推荐难度，不自动重设原目标、历史和成就。
+Assessments have four choices and a separate "I don't know" option, with no repeated entry in a single assessment. Every answer is saved. Difficulty adapts to answers. Results give a recommended content level and estimated vocabulary range rather than standardized certification of listening, speaking, reading, or writing. Assessments do not add learned words, completed sessions, or practice achievements. Existing profiles can reassess and explicitly adopt the result to adjust recommended difficulty without automatically resetting goals, history, or achievements.
 
-内容分 L1—L15：L1 从 hi、hello 等基础交流词开始，逐步增加词频稀有度、抽象程度和专业性，L15 收录标注领域的高难专业术语。全部等级须有实际内容；分级依据允许持续校准，不声称存在统一的“全世界最难词”排名。
+Content spans L1–L15. L1 begins with basic communication such as hi and hello. Frequency rarity, abstraction, and specialization increase toward L15 specialist terms labeled by field. Every level must have actual content. Level criteria can be calibrated over time and do not claim a universal ranking of the world's hardest words.
 
-## 20 词学习
+## 20-word learning
 
-1. 每轮选择 20 个不同词条。总览展示英文、中文义项、等级，可标记原本已会。
-2. 逐词学习展示词形、已收录音标、词性和多个义项；自动朗读英文，也可重播，使用者可选择本地美音或英音。不朗读中文，缺语音或音标时明确提示。
-3. 测验每题四个释义选项，选项来自原轮词池，另有“不会”。词条的其他有效含义不能当作错误选项。
-4. 统计正确、错误和不会；重学错词后只重测这些词，直到全部正确。只剩一个错词时仍保留四个有效选项。
-5. 全轮完成后统一结算；中途退出只保存进度，不记完成。5 个原本已会、15 个新学会的轮次，登记掌握全部 20 词，净新增为 15。
-6. 曾错或不会的词在最终通过后仍保留错题记录，记录作答、错误、不会和重试次数。保留原轮词条、选项和回答快照，可从历史重新挑战；重做旧轮不增加唯一新词或练习类成就。
-7. 完成时可播放带重力、边缘碰撞及淡出的彩带，错词可飞向收录标记；动画不阻塞交互，并提供减少动画选项。
+1. Select 20 distinct entries per session. The overview shows words, English senses, and levels, with markers for words already known.
+2. Word-by-word learning shows forms, available phonetics, parts of speech, and multiple senses. It automatically reads the English word and allows replay. Users can choose local American or British English. Missing voices or phonetics are explicitly identified.
+3. Each quiz question has four definition options from the original session's word pool, plus "I don't know". Other valid senses of the target entry cannot be used as wrong answers.
+4. Count correct, wrong, and unknown responses. Relearn missed words and retest only those words until all are correct. Four valid options remain even when only one missed word needs retesting.
+5. Complete and account for the entire session at once. Exiting midway saves progress without recording completion. A session of 5 already known words and 15 newly learned words registers all 20 as mastered and adds 15 net new words.
+6. Previously missed or unknown words retain mistake records after eventual success, including answer, error, unknown, and retry counts. Save original word, option, and answer snapshots for historical replays. Replaying an old session does not add unique new words or practice achievements.
+7. Completion can show confetti with gravity, edge collisions, and fading. Missed words can fly toward a collection indicator. Animations must not block interaction and must support reduced motion.
 
-## 目标与进度
+## Goals and progress
 
-词数目标按起点之后的净新增部分计算。例如起点 1000、目标 5000，进度从 0% 开始，新增 15 词后为 15/4000。估计词量和逐词掌握记录分开显示。
+Vocabulary count goals use net gains after the baseline. For example, a baseline of 1,000 and target of 5,000 starts at 0%, advancing to 15/4,000 after 15 new words. Estimated vocabulary and individually recorded mastery are shown separately.
 
-四级目标必须覆盖所选完整、版本化词表的 100%。词表外词条不能替代；正式词表未安装、不完整或为空时不得宣告完成。内容更新不改写旧目标和历史快照。
+A CET-4 goal must cover 100% of the selected complete, versioned list. Outside words cannot substitute. A missing, incomplete, or empty official list cannot be declared complete. Content updates do not rewrite old goals or historical snapshots.
 
-后续支持多个中间目标、自选奖励和最终奖励。趣味进度保留三种方向：北京至多伦多旅行、42.195 公里马拉松、公元 1 年至当年的历史时间轴。它们使用相同的实际主进度；地点与历史事件需要可靠内容依据。最终目标达成后，可在已配置的在线功能中生成独立祝贺信。
+Later phases will support intermediate goals, chosen rewards, and a final reward. Three playful progress directions are retained: travel from Beijing to Toronto, a 42.195 km marathon, and a historical timeline from AD 1 to the current year. They use the same actual primary progress. Locations and historical events need reliable content sources. After the final goal, configured online functionality may generate a separate congratulatory letter.
 
-## 成就与记录
+## Achievements and records
 
-首次开始学习独立记录。练习类成就以完成新轮次的练习词次累计，设 100、200、500、1000、2000、3000 等里程碑，重做旧轮不累计。基础成就界面当前可用，可拖动旋转、逐级增强外观的真实 3D 展示柜列入后续阶段。
+The first start of learning is recorded separately. Practice achievements accumulate word practices from newly completed sessions, with milestones at 100, 200, 500, 1,000, 2,000, and 3,000. Replaying old sessions does not count. A basic achievement interface is available now. An actual 3D cabinet that can be rotated by dragging, with increasingly elaborate appearances, is planned for a later phase.
 
-本地记录档案、设置、待学队列、学习与测评过程、错词、目标、成就和内容版本。支持完整导出、校验导入和替换前备份；凭据不得进入学习数据导出。保存与结算需要可恢复且幂等。
+Locally record profiles, settings, the study queue, learning and assessment progress, mistakes, goals, achievements, and content versions. Support complete exports, validated imports, and backups before replacement. Credentials must not enter study data exports. Saving and completion accounting must be recoverable and idempotent.
 
-## 后续阅读与写作
+## Future reading and writing
 
-阅读内容包括合法可用的名著、科普和社会题材；支持整书章节续读及不重复的随机文章，按水平推荐，随机阅读控制在约 20 分钟内。悬停查词显示含义、音标和词性，点击可加入待学队列。读后选择、填空及解释随篇幅调整；具体完成规则在该阶段确认。
+Reading content will include lawfully available classics, popular science, and social topics. Support resuming book chapters and random unread articles, recommend by level, and keep random reading to about 20 minutes. Hover lookup shows definitions, phonetics, and parts of speech; clicking can add a word to the study queue. Post-reading choice questions, fill-in questions, and explanations adapt to length. Confirm exact completion rules in that phase.
 
-写作按水平提供题目，保存原稿、修改稿和反馈，解释语法错误。允许在英语文章中用中文暂代不会的词，由在线服务结合语境推荐表达。原稿中自行使用的库内难词可作为掌握证据；中文占位和尚未学习的生成建议不算原本已会。
+Writing will offer prompts by level, save originals, revisions, and feedback, and explain grammar errors. The earlier design allowed native-language placeholders for unknown English words, with an online service recommending context-appropriate expressions. Difficult catalog words independently used in an original draft can count as mastery evidence. Placeholders and generated suggestions that have not been learned do not count as previously known words.
 
-## 离线、在线与费用
+## Offline, online, and costs
 
-核心学习使用本地内容。网络策略与 AI 开关分开，当前版本不调用模型服务。后续在线功能使用用户自己的服务商配置和额度，凭据隔离保存；未配置、失效或额度不足时仍能使用普通离线学习。开发者密钥不得进入源码、安装包或公开下载配置。
+Core learning uses local content. Network policy and the AI switch are separate. The current version does not call model services. Future online features use each user's own provider configuration and quota, with credentials stored separately. Ordinary offline learning remains available if configuration is missing, invalid, or out of quota. Developer keys must not enter source code, app bundles, or public download configuration.
 
-私人演示额度如需启用，须有独立明确授权、过期和撤销能力、预算及并发限制，不能作为普通用户自备配置失败时的回退。公开部署与服务开通另行决定。
+If private demo quota is introduced, it requires separate explicit authorization, expiry and revocation, budget controls, and concurrency limits. It cannot serve as fallback when a user's own configuration fails. Public deployment and service activation are separate decisions.
 
-## 实施范围
+## Implementation scope
 
-当前完成阶段 0、1：规则与架构、离线 20 词闭环、独立模块、首次引导与全部五种测评题量、15 级内容、档案、目标、错题与历史、基础成就、发音及导入导出。阅读、写作、AI 服务、真实 3D、阶段奖励和趣味进度按 [路线图](ROADMAP.md) 分阶段实现。实际验证范围与已知限制见 [验证记录](VALIDATION.md)。
+Phases 0 and 1 are currently complete: rules and architecture, the offline 20-word cycle, separate modules, first-use onboarding and all five assessment sizes, 15 content levels, profiles, goals, mistakes and history, basic achievements, pronunciation, and import/export. Reading, writing, AI services, actual 3D graphics, milestone rewards, and playful progress views will follow the [roadmap](ROADMAP.md). See the [validation record](VALIDATION.md) for actual verification scope and known limitations.

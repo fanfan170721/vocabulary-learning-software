@@ -5,6 +5,8 @@ from __future__ import annotations
 from copy import deepcopy
 from contextlib import nullcontext
 from datetime import datetime, timezone
+from functools import lru_cache
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -27,11 +29,54 @@ def new_id() -> str:
 
 def _meaning_tokens(text: str) -> set[str]:
     return {re.sub(r"\s+", "", part).casefold() for part in
-            re.split(r"[;；,，、/（）()\n]", text) if part.strip()}
+            re.split(r"[;\uff1b,\uff0c\u3001/\uff08\uff09()\n]", text) if part.strip()}
+
+
+@lru_cache(maxsize=1)
+def _legacy_english_texts():
+    path = Path(__file__).parent / "resources" / "legacy_english_texts.json"
+    return json.loads(path.read_text(encoding="utf-8-sig")) if path.exists() else {}
+
+
+@lru_cache(maxsize=16384)
+def _localized_text(text):
+    return _legacy_english_texts().get(hashlib.sha256(text.encode("utf-8")).hexdigest(), text)
+
+
+def localize_record(data):
+    """Translate stock legacy display text without rewriting historical evidence."""
+    if isinstance(data, str):
+        return _localized_text(data)
+    if isinstance(data, list):
+        return [localize_record(value) for value in data]
+    if isinstance(data, dict):
+        result = {key: value if key == "name" and "self_rating" in data else localize_record(value)
+                  for key, value in data.items()}
+        if "definition" in data and result["definition"] != data["definition"]:
+            result["language"] = "en"
+        if "self_rating" in result:
+            result["self_rating"] = assessment_rules.normalize_rating(result["self_rating"])
+        if result.get("choice_text") == assessment_rules.LEGACY_UNKNOWN_ANSWER:
+            result["choice_text"] = assessment_rules.UNKNOWN_ANSWER
+        title = result.get("title")
+        if isinstance(title, str):
+            match = re.fullmatch(r"\u638c\u63e1 (\d+) \u8bcd", title)
+            if match:
+                result["title"] = f"Master {match[1]} words"
+        return result
+    return deepcopy(data)
 
 
 def _with_onboarding_defaults(profile, has_learning_records):
     profile = deepcopy(profile)
+    profile["self_rating"] = assessment_rules.normalize_rating(profile.get("self_rating", "Beginner"))
+    if profile.get("name") == "\u5b66\u4e60\u8005":
+        profile["name"] = "Learner"
+    profile.update(interface_language="en", meaning_language="en")
+    confidence_labels = {"\u672a\u77e5": "Unknown", "\u8f83\u4f4e": "Low", "\u4e00\u822c": "Moderate"}
+    for ability in profile.get("abilities", {}).values():
+        if isinstance(ability, dict) and ability.get("confidence") in confidence_labels:
+            ability["confidence"] = confidence_labels[ability["confidence"]]
     if "onboarding_complete" not in profile:
         profile["onboarding_complete"] = has_learning_records
         profile["onboarding_step"] = "complete" if has_learning_records else "self_rating"
@@ -58,12 +103,12 @@ class AppService:
         with self.store.transaction() as connection:
             if not self.store.get(connection, "profile", "local"):
                 self.store.put(connection, "profile", "local", {
-                    "id": "local", "name": "学习者", "self_rating": "初级", "difficulty": 2,
+                    "id": "local", "name": "Learner", "self_rating": "Beginner", "difficulty": 2,
                     "estimated_vocabulary": 0, "estimate_new_baseline": 0, "onboarding_complete": False,
                     "onboarding_step": "self_rating", "onboarding_assessment_id": None, "estimate_source": "unset",
-                    "interface_language": "zh-CN", "meaning_language": "zh-CN",
+                    "interface_language": "en", "meaning_language": "en",
                     "learning_language": "en", "updated_at": now(),
-                    "abilities": {key: {"value": None, "confidence": "未知", "evidence": 0}
+                    "abilities": {key: {"value": None, "confidence": "Unknown", "evidence": 0}
                                   for key in ("recognition", "active_use", "reading", "writing", "listening", "speaking")},
                 })
                 self.store.put(connection, "settings", "local", {
@@ -77,37 +122,37 @@ class AppService:
     @staticmethod
     def _validate_content(content):
         if not isinstance(content, dict) or not isinstance(content.get("version"), str):
-            raise ValueError("词库缺少版本信息。")
+            raise ValueError("The vocabulary pack is missing version information.")
         words = content.get("words")
         if not isinstance(words, list) or not words:
-            raise ValueError("词库没有可用词条。")
+            raise ValueError("The vocabulary pack has no usable entries.")
         ids, lemmas = set(), set()
         for word in words:
             if not isinstance(word, dict):
-                raise ValueError("词条格式不正确。")
+                raise ValueError("The vocabulary entry format is invalid.")
             identifier, lemma = word.get("id"), word.get("lemma")
             if not isinstance(identifier, str) or not identifier or identifier in ids:
-                raise ValueError("词条 ID 不能为空或重复。")
+                raise ValueError("Vocabulary entry IDs must be nonempty and unique.")
             key = (word.get("language", "en"), unicodedata.normalize("NFKC", str(lemma)).strip().casefold())
             if not isinstance(lemma, str) or not lemma.strip() or lemma != lemma.strip() or key in lemmas:
-                raise ValueError("同一语言不能用重复词元凑词库数量。")
+                raise ValueError("Duplicate lemmas in the same language cannot count as separate entries.")
             if type(word.get("level")) is not int or not 1 <= word["level"] <= 15:
-                raise ValueError("词条难度必须在 L1—L15。")
+                raise ValueError("Vocabulary entry difficulty must be between L1 and L15.")
             senses = word.get("senses")
             if not isinstance(senses, list) or not senses:
-                raise ValueError("每个词条至少需要一个义项。")
+                raise ValueError("Each vocabulary entry needs at least one sense.")
             for sense in senses:
                 if not isinstance(sense, dict) or not all(
                     isinstance(sense.get(field), str) and sense[field].strip()
                     for field in ("id", "pos", "definition")
                 ):
-                    raise ValueError("词条义项缺少 ID、词性或释义。")
+                    raise ValueError("A word sense is missing its ID, part of speech, or definition.")
             if len({s["id"] for s in senses}) != len(senses):
-                raise ValueError("同一词条内的义项 ID 不能重复。")
+                raise ValueError("Sense IDs must be unique within each vocabulary entry.")
             ids.add(identifier)
             lemmas.add(key)
         if not isinstance(content.get("word_sets", []), list):
-            raise ValueError("目标词集格式不正确。")
+            raise ValueError("The target word set format is invalid.")
 
     def close(self):
         """Connections are scoped to each operation; retained for caller convenience."""
@@ -138,49 +183,49 @@ class AppService:
         with self.store.connect() as connection:
             sessions = self.store.all(connection, "session")
             active = next((s for s in sessions if s["stage"] != "complete"), None)
-            return {
+            return localize_record({
                 "profile": self._profile(connection),
                 "settings": self.store.get(connection, "settings", "local"),
                 "stats": self._stats(connection), "active_session": self._present(active),
-                "active_assessment": next((deepcopy(a) for a in reversed(self.store.all(connection, "assessment")) if a["status"] == "in_progress"), None),
+                "active_assessment": next((self._present_assessment(a) for a in reversed(self.store.all(connection, "assessment")) if a["status"] == "in_progress"), None),
                 "goals": [self._goal_view(connection, goal) for goal in self.store.all(connection, "goal")],
                 "achievements": self._achievements(connection),
                 "content": {"version": self.content["version"], "word_count": len(self.words),
                             "levels": sorted({w["level"] for w in self.words.values()}),
                             "word_sets": deepcopy(self.content.get("word_sets", []))},
-            }
+            })
 
     def update_profile(self, **kwargs):
         allowed = {"name", "self_rating", "difficulty", "estimated_vocabulary", "onboarding_complete"}
         if set(kwargs) - allowed:
-            raise ValueError("不支持的档案字段。")
+            raise ValueError("Unsupported profile field.")
         with self.store.transaction() as connection:
             profile = self._profile(connection)
             if "name" in kwargs:
                 name = kwargs["name"]
                 if not isinstance(name, str) or not 1 <= len(name.strip()) <= 60:
-                    raise ValueError("名字请填写 1—60 个字符。")
+                    raise ValueError("Enter a name containing 1 to 60 characters.")
                 profile["name"] = name.strip()
             if "self_rating" in kwargs:
-                value = kwargs["self_rating"]
-                if value not in ("刚开始学", "只会一点", "初级", "中级", "高级", "熟练", "本地人", "专业英语学习人"):
-                    raise ValueError("请选择可用的自评选项。")
+                value = assessment_rules.normalize_rating(kwargs["self_rating"])
+                if value not in assessment_rules.RATINGS:
+                    raise ValueError("Choose one of the available self-ratings.")
                 profile["self_rating"] = value
             if "difficulty" in kwargs:
                 if type(kwargs["difficulty"]) is not int or not 1 <= kwargs["difficulty"] <= 15:
-                    raise ValueError("难度必须在 L1—L15。")
+                    raise ValueError("Difficulty must be between L1 and L15.")
                 profile["difficulty"] = kwargs["difficulty"]
             if "estimated_vocabulary" in kwargs:
                 value = kwargs["estimated_vocabulary"]
                 if type(value) is not int or not 0 <= value <= 1000000:
-                    raise ValueError("估计词量应为 0—1000000 的整数。")
+                    raise ValueError("Estimated vocabulary must be an integer from 0 to 1,000,000.")
                 if value != profile["estimated_vocabulary"]:
                     if self._stats(connection)["completed_sessions"] or self.store.all(connection, "goal"):
-                        raise ValueError("已有学习记录或目标。重设估计基线需确认对目标的影响，当前版本暂不重设。")
+                        raise ValueError("Learning records or goals already exist. This version cannot reset the estimated baseline because doing so would affect existing goals.")
                     profile["estimated_vocabulary"] = value
             if "onboarding_complete" in kwargs:
                 if type(kwargs["onboarding_complete"]) is not bool:
-                    raise ValueError("起点设置状态必须为布尔值。")
+                    raise ValueError("The starting-point setup status must be a boolean.")
                 profile["onboarding_complete"] = kwargs["onboarding_complete"]
                 profile["onboarding_step"] = "complete" if kwargs["onboarding_complete"] else "self_rating"
             profile["updated_at"] = now()
@@ -192,14 +237,15 @@ class AppService:
         return json.loads(path.read_text(encoding="utf-8-sig")) if path.exists() else {}
 
     def set_onboarding_rating(self, self_rating, name=None, use_assessment=True):
+        self_rating = assessment_rules.normalize_rating(self_rating)
         if self_rating not in assessment_rules.RATINGS or type(use_assessment) is not bool:
-            raise ValueError("请选择可用的自评选项。")
+            raise ValueError("Choose one of the available self-ratings.")
         if name is not None and (not isinstance(name, str) or not 1 <= len(name.strip()) <= 60):
-            raise ValueError("名字请填写 1—60 个字符。")
+            raise ValueError("Enter a name containing 1 to 60 characters.")
         with self.store.transaction() as connection:
             profile = self._profile(connection)
             if profile.get("onboarding_complete"):
-                raise ValueError("档案已完成初始设置。可在设置页修改自评，或单独重新测评。")
+                raise ValueError("Initial profile setup is complete. Change your self-rating in Settings or take another assessment.")
             profile["self_rating"] = self_rating
             if name is not None:
                 profile["name"] = name.strip()
@@ -217,58 +263,68 @@ class AppService:
         return AppService._questions({"words": words, "round_no": 1}, [word_id])[0]
 
     def start_assessment(self, self_rating, question_count=20):
+        self_rating = assessment_rules.normalize_rating(self_rating)
         with self.store.transaction() as connection:
             profile = self._profile(connection)
             pending = next((a for a in reversed(self.store.all(connection, "assessment")) if a["status"] == "in_progress"), None)
             if pending:
                 if pending["question_count"] != question_count:
-                    raise ValueError(f"还有一份未完成的 {pending['question_count']} 题测评，请先继续原测评。")
+                    raise ValueError(f"An unfinished {pending['question_count']}-question assessment exists. Resume it first.")
                 if not profile.get("onboarding_complete"):
                     profile.update(onboarding_assessment_id=pending["id"], onboarding_step="assessment")
                     self.store.put(connection, "profile", "local", profile)
-                return deepcopy(pending)
+                return self._present_assessment(pending)
             record = assessment_rules.create(list(self.words.values()), self.content["version"], self_rating, question_count,
                                              self._level_config(), self._assessment_question, now())
             self.store.put(connection, "assessment", record["id"], record)
             if not profile.get("onboarding_complete"):
                 profile.update(onboarding_assessment_id=record["id"], onboarding_step="assessment", self_rating=self_rating)
                 self.store.put(connection, "profile", "local", profile)
-            return deepcopy(record)
+            return self._present_assessment(record)
+
+    @staticmethod
+    def _present_assessment(record):
+        if record is None:
+            return None
+        result = localize_record(record)
+        if record["status"] == "complete":
+            result["result"] = assessment_rules.estimate(record)
+        return result
 
     def assessment(self, assessment_id=None):
         with self.store.connect() as connection:
             if assessment_id:
                 record = self.store.get(connection, "assessment", assessment_id)
                 if record is None:
-                    raise ValueError("没有找到该测评记录。")
-                return deepcopy(record)
+                    raise ValueError("The assessment record was not found.")
+                return self._present_assessment(record)
             records = self.store.all(connection, "assessment")
             profile = self._profile(connection)
             linked = self.store.get(connection, "assessment", profile.get("onboarding_assessment_id", ""))
             if linked and (not profile.get("onboarding_complete") or linked["status"] == "in_progress"):
-                return deepcopy(linked)
-            return deepcopy(next((a for a in reversed(records) if a["status"] == "in_progress"), records[-1] if records else None))
+                return self._present_assessment(linked)
+            return self._present_assessment(next((a for a in reversed(records) if a["status"] == "in_progress"), records[-1] if records else None))
 
     def answer_assessment(self, assessment_id, option_id=None):
         with self.store.transaction() as connection:
             record = self.store.get(connection, "assessment", assessment_id)
             if record is None:
-                raise ValueError("没有找到该测评记录。")
+                raise ValueError("The assessment record was not found.")
             updated = assessment_rules.answer(record, option_id, self._assessment_question, now())
             self.store.put(connection, "assessment", assessment_id, updated)
             profile = self._profile(connection)
             if not profile.get("onboarding_complete") and profile.get("onboarding_assessment_id") == assessment_id and updated["status"] == "complete":
                 profile["onboarding_step"] = "assessment_result"
                 self.store.put(connection, "profile", "local", profile)
-            return deepcopy(updated)
+            return self._present_assessment(updated)
 
     def accept_assessment(self, assessment_id):
         with self.store.transaction() as connection:
             record = self.store.get(connection, "assessment", assessment_id)
             if record is None or record["status"] != "complete":
-                raise ValueError("请先完整完成测评，再采用推荐难度。")
+                raise ValueError("Complete the assessment before adopting its recommended difficulty.")
             profile = self._profile(connection)
-            result = record["result"]
+            result = assessment_rules.estimate(record)
             profile["difficulty"] = result["recommended_level"]
             profile["difficulty_assessment_id"] = assessment_id
             profile["last_assessment_id"] = assessment_id
@@ -286,13 +342,13 @@ class AppService:
 
     def finish_onboarding(self, kind="word_count", baseline=0, target=5000, word_set_id=None):
         if type(baseline) is not int or not 0 <= baseline <= 1000000:
-            raise ValueError("起点词量应为 0—1000000 的整数，并由你确认。")
+            raise ValueError("Confirm a starting vocabulary count that is an integer from 0 to 1,000,000.")
         with self.store.transaction() as connection:
             profile = self._profile(connection)
             if profile.get("onboarding_complete"):
-                raise ValueError("初始设置已经完成。请在目标页面添加目标，不会重置原学习记录。")
+                raise ValueError("Initial setup is complete. Add goals on the Goals page to retain your existing learning records.")
             if profile.get("onboarding_step") != "goal":
-                raise ValueError("请先完成自评，或完成测评并确认推荐难度。")
+                raise ValueError("Complete your self-rating, or finish an assessment and confirm its recommended difficulty first.")
             goal = self._configure_goal(connection, kind, baseline, target, word_set_id)
             profile = self._profile(connection)
             linked = self.store.get(connection, "assessment", profile.get("onboarding_assessment_id", ""))
@@ -307,18 +363,18 @@ class AppService:
     def update_settings(self, **kwargs):
         allowed = {"network_mode", "ai_enabled", "reduced_motion", "english_variant", "speak_chinese"}
         if set(kwargs) - allowed:
-            raise ValueError("不支持的设置字段。")
+            raise ValueError("Unsupported settings field.")
         if kwargs.get("ai_enabled"):
-            raise ValueError("当前版本尚未接入 AI，普通学习可离线使用。")
+            raise ValueError("AI is not connected in this version. Regular study is available offline.")
         if "network_mode" in kwargs and kwargs["network_mode"] not in ("offline", "auto", "online_first"):
-            raise ValueError("请选择离线、自动或在线优先。")
+            raise ValueError("Choose Offline, Automatic, or Online first.")
         for field in ("ai_enabled", "reduced_motion", "speak_chinese"):
             if field in kwargs and type(kwargs[field]) is not bool:
-                raise ValueError("开关值必须为布尔值。")
+                raise ValueError("Toggle values must be booleans.")
         if kwargs.get("speak_chinese"):
-            raise ValueError("当前版本仅朗读英语，不朗读中文释义。")
+            raise ValueError("This version only pronounces headwords; definition narration is unavailable.")
         if "english_variant" in kwargs and kwargs["english_variant"] not in ("en-US", "en-GB"):
-            raise ValueError("当前仅预留英式或美式英语口音。")
+            raise ValueError("Only British and American English accents are supported.")
         with self.store.transaction() as connection:
             settings = self.store.get(connection, "settings", "local")
             settings.update(kwargs)
@@ -332,14 +388,14 @@ class AppService:
     def _configure_goal(self, connection, kind, baseline=1000, target=5000, word_set_id=None):
         kind = {"count": "word_count", "cet-4": "cet4", "cet_4": "cet4"}.get(kind, kind)
         if kind not in ("word_count", "word_set", "cet4"):
-            raise ValueError("目标类型必须是词数或指定词集。")
+            raise ValueError("The goal type must be a word count or a specific word set.")
         with (self.store.transaction() if connection is None else nullcontext(connection)) as connection:
             goal = {"id": new_id(), "kind": kind, "created_at": now(), "completed_at": None,
                     "threshold": 1, "baseline_new_words": self._stats(connection)["net_new_words"]}
             if kind == "word_count":
                 if type(baseline) is not int or type(target) is not int or not 0 <= baseline < target <= 1000000:
-                    raise ValueError("目标词数必须大于起点，且不超过 1000000。")
-                goal.update(baseline=baseline, target=target, title=f"掌握 {target} 词")
+                    raise ValueError("The target word count must exceed the baseline and be no greater than 1,000,000.")
+                goal.update(baseline=baseline, target=target, title=f"Master {target} words")
                 if not self._stats(connection)["completed_sessions"] and not self.store.all(connection, "goal"):
                     profile = self._profile(connection)
                     profile["estimated_vocabulary"] = baseline
@@ -349,18 +405,18 @@ class AppService:
                 selected = next((s for s in sets if s.get("id") == word_set_id), None) if word_set_id else None
                 if selected is None and kind == "cet4":
                     selected = next((s for s in sets if s.get("kind") in ("cet4", "cet-4", "CET-4")), None)
-                selected = deepcopy(selected or {"id": word_set_id or "cet4", "name": "英语四级" if kind == "cet4" else "指定词集",
+                selected = deepcopy(selected or {"id": word_set_id or "cet4", "name": "CET-4" if kind == "cet4" else "Specific word set",
                                                   "version": "", "complete": False, "kind": "cet4" if kind == "cet4" else "custom", "word_ids": []})
                 if kind == "cet4" and selected.get("kind") not in ("cet4", "cet-4", "CET-4"):
-                    raise ValueError("测试词集不能用作正式四级目标。")
+                    raise ValueError("A test word set cannot be used as an official CET-4 goal.")
                 ids = selected.get("word_ids", [])
                 if not isinstance(ids, list) or any(not isinstance(i, str) for i in ids):
-                    raise ValueError("目标词集格式不正确。")
+                    raise ValueError("The target word set format is invalid.")
                 ids = list(dict.fromkeys(ids))
                 goal.update(word_set_id=selected["id"], word_set_version=selected.get("version", ""),
                             word_ids=ids, target=len(ids), baseline=0,
                             loaded_complete=bool(selected.get("complete") and selected.get("version") and ids and all(i in self.words for i in ids)),
-                            title=selected.get("name", "指定词集"),
+                            title=selected.get("name", "Specific word set"),
                             word_set_metadata=deepcopy(selected),
                             word_snapshots=[deepcopy(self.words[i]) for i in ids if i in self.words])
             for old in self.store.all(connection, "goal"):
@@ -381,18 +437,18 @@ class AppService:
             numerator = max(0, self._stats(connection)["net_new_words"] - goal["baseline_new_words"])
             denominator = goal["target"] - goal["baseline"]
             view.update(current=goal["baseline"] + numerator, available=True,
-                        remaining=max(0, denominator - numerator), message="按起点之后净新增的不同词计数")
+                        remaining=max(0, denominator - numerator), message="Counts distinct newly learned words after the baseline")
         else:
             ids = set(goal["word_ids"])
             numerator, denominator = len(mastered & ids), len(ids)
             available = bool(goal.get("loaded_complete") and denominator)
             view.update(current=numerator, available=available, remaining=max(0, denominator - numerator),
                         remaining_words=[word for word in goal.get("word_snapshots", []) if word["id"] not in mastered],
-                        message="仅检查该版本词库的词汇覆盖，不代表考试一定通过" if available else "完整合法词表待安装；暂不计算达成比例")
+                        message="Measures vocabulary coverage for this version of the word set; it does not guarantee passing the exam" if available else "A complete licensed word list must be installed before progress can be calculated")
         view.update(numerator=numerator, denominator=denominator,
                     ratio=min(1.0, numerator / denominator) if denominator and view["available"] else 0.0,
                     completed=bool(goal.get("completed_at")))
-        return view
+        return localize_record(view)
 
     def _refresh_goals(self, connection):
         for goal in self.store.all(connection, "goal"):
@@ -412,10 +468,10 @@ class AppService:
 
     def enqueue(self, word_id):
         if word_id not in self.words:
-            raise ValueError("没有找到该词条。")
+            raise ValueError("The vocabulary entry was not found.")
         with self.store.transaction() as connection:
             if self.store.get(connection, "mastered", word_id):
-                raise ValueError("该词已掌握，可从学习历史重新挑战原轮。")
+                raise ValueError("This word is already mastered. Retry its original session from Study history.")
             self.store.put(connection, "queue", word_id, {"id": word_id, "added_at": now()})
         return self.queue()
 
@@ -427,12 +483,12 @@ class AppService:
     def start_session(self, review_of=None):
         with self.store.transaction() as connection:
             if any(s["stage"] != "complete" for s in self.store.all(connection, "session")):
-                raise ValueError("还有一轮未完成，请先继续该轮学习。")
+                raise ValueError("An unfinished session exists. Resume it first.")
             mastered = {w["id"] for w in self.store.all(connection, "mastered")}
             if review_of:
                 old = self.store.get(connection, "session", review_of)
                 if not old or old["stage"] != "complete":
-                    raise ValueError("只能重新挑战已经完成的历史轮次。")
+                    raise ValueError("Only completed sessions can be retried.")
                 words = deepcopy(old["words"])
             else:
                 difficulty = self._profile(connection)["difficulty"]
@@ -447,7 +503,7 @@ class AppService:
                                                queued.index(w["id"]) if w["id"] in queued else abs(w["level"] - difficulty)))
                 ordered = list(dict.fromkeys(queued + [w["id"] for w in candidates]))
                 if len(ordered) < 20:
-                    raise ValueError(f"当前难度附近仅剩 {len(ordered)} 个未学词，不足 20 个。请调整难度、扩充词库或重做历史轮次。")
+                    raise ValueError(f"Only {len(ordered)} unlearned words remain near the current difficulty; at least 20 are required. Change the difficulty, expand the vocabulary pack, or retry a previous session.")
                 words = deepcopy([self.words[identifier] for identifier in ordered[:20]])
             ids = [word["id"] for word in words]
             session = {"id": new_id(), "stage": "overview", "words": words, "known_before": [],
@@ -486,11 +542,11 @@ class AppService:
                 if len(options) == 4:
                     break
             if len(options) != 4:
-                raise ValueError(f"{word['lemma']} 无法从本轮词池组成四个清楚的选项，请调整词库或换一轮。")
+                raise ValueError(f"Four distinct answer options for {word['lemma']} cannot be formed from this session. Update the vocabulary pack or choose another session.")
             correct_id = options[0]["id"]
             rng.shuffle(options)
             questions.append({"id": new_id(), "word_id": identifier, "lemma": word["lemma"],
-                              "sense_id": sense["id"], "pos": sense["pos"], "prompt": "请选择该词性对应的中文含义",
+                              "sense_id": sense["id"], "pos": sense["pos"], "prompt": "Choose the definition that matches this part of speech",
                               "options": options, "correct_option_id": correct_id, "round_no": session["round_no"]})
         return questions
 
@@ -504,7 +560,7 @@ class AppService:
         lookup = {w["id"]: w for w in session["words"]}
         result["current_word"] = (deepcopy(lookup[session["learn_ids"][session["learn_index"]]])
                                   if session["stage"] in ("learn", "relearn") and session["learn_index"] < len(session["learn_ids"]) else None)
-        return result
+        return localize_record(result)
 
     def _get_session(self, connection, session_id=None):
         if session_id:
@@ -512,7 +568,7 @@ class AppService:
         else:
             result = next((s for s in reversed(self.store.all(connection, "session")) if s["stage"] != "complete"), None)
         if result is None:
-            raise ValueError("没有找到学习轮次。")
+            raise ValueError("The study session was not found.")
         return result
 
     def session(self, session_id=None):
@@ -523,7 +579,7 @@ class AppService:
         with self.store.transaction() as connection:
             session = self._get_session(connection, session_id)
             if session["stage"] != "overview" or word_id not in {w["id"] for w in session["words"]} or type(known) is not bool:
-                raise ValueError("只能在本轮总览中修改已会标记。")
+                raise ValueError("Already-known marks can only be changed in the session overview.")
             marked = set(session["known_before"])
             marked.add(word_id) if known else marked.discard(word_id)
             session["known_before"] = sorted(marked)
@@ -534,7 +590,7 @@ class AppService:
         with self.store.transaction() as connection:
             session = self._get_session(connection, session_id)
             if session["stage"] != "overview":
-                raise ValueError("该轮已经开始。")
+                raise ValueError("This session has already started.")
             session["stage"] = "learn"
             self.store.put(connection, "session", session_id, session)
             return self._present(session)
@@ -543,7 +599,7 @@ class AppService:
         with self.store.transaction() as connection:
             session = self._get_session(connection, session_id)
             if session["stage"] not in ("learn", "relearn"):
-                raise ValueError("当前不是逐词学习阶段。")
+                raise ValueError("The session is not currently in the word-by-word study stage.")
             session["learn_index"] += 1
             if session["learn_index"] == len(session["learn_ids"]):
                 session["stage"] = "quiz"
@@ -555,17 +611,17 @@ class AppService:
         with self.store.transaction() as connection:
             session = self._get_session(connection, session_id)
             if session["stage"] != "quiz":
-                raise ValueError("当前没有等待作答的题目。")
+                raise ValueError("No question is waiting for an answer.")
             question = session["questions"][session["quiz_index"]]
             choices = {o["id"]: o["text"] for o in question["options"]}
             if option_id is not None and option_id not in choices:
-                raise ValueError("题目已变化，请按当前题目作答。")
+                raise ValueError("The question has changed. Answer the current question.")
             correct = option_id == question["correct_option_id"]
             identifier = question["word_id"]
             attempt = {"id": new_id(), "question_id": question["id"], "word_id": identifier,
                        "sense_id": question["sense_id"], "round_no": session["round_no"],
                        "option_id": option_id, "correct": correct, "kind": "correct" if correct else "unknown" if option_id is None else "wrong",
-                       "choice_text": choices.get(option_id, "我不会"), "answer_text": choices[question["correct_option_id"]], "at": now(),
+                       "choice_text": choices.get(option_id, assessment_rules.UNKNOWN_ANSWER), "answer_text": choices[question["correct_option_id"]], "at": now(),
                        "question": deepcopy(question)}
             session["attempts"].append(attempt)
             session["round_results"].append(deepcopy(attempt))
@@ -587,7 +643,7 @@ class AppService:
             if session["stage"] == "complete":
                 return self._present(session)
             if session["stage"] != "round_result":
-                raise ValueError("请先完成当前测验。")
+                raise ValueError("Complete the current quiz first.")
             if session["wrong_ids"]:
                 session["stage"] = "relearn"
                 session["round_no"] += 1
@@ -608,12 +664,12 @@ class AppService:
     def _finalize(self, connection, session):
         event_id = "complete:" + session["id"]
         if self.store.get(connection, "event", event_id):
-            raise ValueError("该轮结算记录不一致，请从备份恢复。")
+            raise ValueError("The session completion records are inconsistent. Restore from a backup.")
         if not session["round_results"] or any(not a["correct"] for a in session["round_results"]):
-            raise ValueError("尚有未通过的词，不能结算。")
+            raise ValueError("The session cannot be completed while some words remain unpassed.")
         latest = {a["word_id"]: a["correct"] for a in session["attempts"]}
         if len(latest) != 20 or not all(latest.values()):
-            raise ValueError("必须完成全部 20 个词的测验。")
+            raise ValueError("Complete the quiz for all 20 words.")
         new_words = []
         for word in session["words"]:
             old = self.store.get(connection, "mastered", word["id"])
@@ -646,8 +702,8 @@ class AppService:
             definitions = raw if isinstance(raw, list) else raw.get("definitions", raw.get("achievements", []))
             if definitions:
                 return definitions
-        return [{"id": "first_use", "title": "首次使用", "description": "开始第一轮学习", "threshold": 1, "metric": "started_sessions"}] + [
-            {"id": f"practice_{n}", "title": f"完成 {n} 词练习", "description": "累计完成新轮次；重做历史不计入", "threshold": n, "metric": "achievement_practice_words"}
+        return [{"id": "first_use", "title": "First session", "description": "Start your first study session", "threshold": 1, "metric": "started_sessions"}] + [
+            {"id": f"practice_{n}", "title": f"Practice {n} words", "description": "Accumulates completed new sessions; retries of previous sessions do not count", "threshold": n, "metric": "achievement_practice_words"}
             for n in (100, 200, 500, 1000, 2000, 3000)]
 
     def _award_achievements(self, connection):
@@ -675,7 +731,7 @@ class AppService:
                 item = deepcopy(record["definition"])
                 item.update(earned=True, earned_at=record["earned_at"])
                 result.append(item)
-        return result
+        return localize_record(result)
 
     def achievements(self):
         with self.store.connect() as connection:
@@ -702,7 +758,7 @@ class AppService:
     def export_data(self, path):
         path = Path(path)
         if path.resolve() == self.db_path.resolve():
-            raise ValueError("导出文件不能覆盖正在使用的学习数据库。")
+            raise ValueError("The export file cannot overwrite the active learning database.")
         with self.store.connect() as connection:
             records = [{"kind": row[0], "id": row[1], "data": json.loads(row[2])}
                        for row in connection.execute("SELECT kind,id,data FROM records ORDER BY rowid")]
@@ -716,11 +772,11 @@ class AppService:
     def import_data(self, path):
         path = Path(path)
         if path.stat().st_size > 50 * 1024 * 1024:
-            raise ValueError("导入文件超过 50 MB，请使用较小的学习档案。")
+            raise ValueError("The import file exceeds 50 MB. Use a smaller learning archive.")
         try:
-            payload = json.loads(path.read_text(encoding="utf-8-sig"), parse_constant=lambda value: (_ for _ in ()).throw(ValueError("不支持的数字")))
+            payload = json.loads(path.read_text(encoding="utf-8-sig"), parse_constant=lambda value: (_ for _ in ()).throw(ValueError("Unsupported numeric value")))
         except (json.JSONDecodeError, UnicodeDecodeError, RecursionError) as error:
-            raise ValueError("学习档案不是有效的 JSON 文件。") from error
+            raise ValueError("The learning archive is not a valid JSON file.") from error
         self._validate_import(payload)
         backup = self.store.backup("before-import")
         with self.store.transaction() as connection:
@@ -735,26 +791,26 @@ class AppService:
         try:
             AppService._validate_import_payload(payload)
         except (KeyError, TypeError, IndexError, AttributeError, RecursionError) as error:
-            raise ValueError("学习档案结构不完整或数据不一致，未修改本地记录。") from error
+            raise ValueError("The learning archive is incomplete or inconsistent. Local records were not changed.") from error
 
     @staticmethod
     def _validate_import_payload(payload):
-        def fail(message="学习档案结构不完整或数据不一致，未修改本地记录。"):
+        def fail(message="The learning archive is incomplete or inconsistent. Local records were not changed."):
             raise ValueError(message)
         if not isinstance(payload, dict) or payload.get("application") != "VocabularyLearning":
-            fail("这不是本应用导出的学习档案。")
+            fail("This learning archive was not exported by this application.")
         pending = [payload]
         credential_fields = {"apikey", "password", "secret", "accesstoken", "refreshtoken", "authorization", "credentials", "token"}
         while pending:
             value = pending.pop()
             if isinstance(value, dict):
                 if any(str(key).casefold().replace("_", "").replace("-", "") in credential_fields for key in value):
-                    fail("学习档案中不能包含密钥或凭据。")
+                    fail("Learning archives cannot contain keys or credentials.")
                 pending.extend(value.values())
             elif isinstance(value, list):
                 pending.extend(value)
         if type(payload.get("schemaVersion")) is not int or payload["schemaVersion"] != SCHEMA_VERSION:
-            fail("学习档案版本不受支持，请使用兼容的软件版本。")
+            fail("This learning archive version is unsupported. Use a compatible application version.")
         records = payload.get("records")
         if not isinstance(records, list) or len(records) > 100000:
             fail()
@@ -777,9 +833,9 @@ class AppService:
         if type(profile.get("estimated_vocabulary")) is not int or not 0 <= profile["estimated_vocabulary"] <= 1000000 or type(profile.get("difficulty")) is not int or not 1 <= profile["difficulty"] <= 15:
             fail()
         if settings.get("ai_enabled") is not False or settings.get("network_mode") not in ("offline", "auto", "online_first"):
-            fail("档案含不支持的连接设置；当前版本不导入密钥或启用 AI。")
+            fail("The archive contains unsupported connection settings. This version cannot import keys or enable AI.")
         if set(settings) - {"id", "network_mode", "ai_enabled", "reduced_motion", "english_variant", "speak_chinese"}:
-            fail("学习档案包含不支持的设置字段。")
+            fail("The learning archive contains unsupported settings fields.")
         if type(settings.get("reduced_motion")) is not bool or settings.get("english_variant") not in ("en-US", "en-GB") or settings.get("speak_chinese", False) is not False:
             fail()
         assessments = {identifier: record for (kind, identifier), record in lookup.items() if kind == "assessment"}
@@ -869,7 +925,7 @@ class AppService:
                     if attempt["round_no"] > session["round_no"] or question["round_no"] != attempt["round_no"] or attempt["question_id"] != question["id"]:
                         fail()
                     expected_kind = "correct" if correct else "unknown" if attempt["option_id"] is None else "wrong"
-                    if attempt["kind"] != expected_kind or attempt["choice_text"] != options.get(attempt["option_id"], "我不会") or attempt["answer_text"] != options[question["correct_option_id"]]:
+                    if attempt["kind"] != expected_kind or not assessment_rules.choice_matches(options, attempt["option_id"], attempt["choice_text"]) or attempt["answer_text"] != options[question["correct_option_id"]]:
                         fail()
                     grouped.setdefault(attempt["round_no"], []).append(attempt)
                     latest[wid] = correct
@@ -961,7 +1017,7 @@ class AppService:
                     if not isinstance(metadata, dict) or not isinstance(snapshots, list):
                         fail()
                     if item["kind"] == "cet4" and metadata.get("kind") not in ("cet4", "cet-4", "CET-4"):
-                        fail("测试词集不能冒充正式四级目标。")
+                        fail("A test word set cannot be represented as an official CET-4 goal.")
                     if item["loaded_complete"] and (not ids or not item.get("word_set_version") or not metadata.get("complete") or {w.get("id") for w in snapshots} != ids):
                         fail()
                     achieved = bool(item["loaded_complete"] and ids and ids <= mastered_ids)

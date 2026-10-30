@@ -22,7 +22,7 @@ class QuietSpeech(QObject):
         self.language = language
 
     def status(self):
-        return "测试档案：本地语音状态单独验证"
+        return "Test profile: local speech status is verified separately"
 
     def speak(self, text, language="en-US"):
         return False
@@ -90,7 +90,7 @@ class DesktopFlowTests(unittest.TestCase):
             while self.window.current_session["stage"] == "quiz":
                 self.choose_correct()
             self.assertEqual(len(self.window.current_session["wrong_ids"]), 1)
-            self.click_text(self.window.tr("relearn_mistakes") + "（1）")
+            self.click_text(self.window.tr("relearn_mistakes") + " (1)")
             self.window.findChild(QPushButton, "nextWordButton").click()
             self.flush()
             self.assertEqual(len(self.window.answer_buttons), 4)
@@ -216,7 +216,7 @@ class DesktopFlowTests(unittest.TestCase):
 
     def test_high_assessment_baseline_gets_valid_initial_goal_target(self):
         self.fresh_window()
-        self.window.onboarding_rating_combo.setCurrentText("专业英语学习人")
+        self.window.onboarding_rating_combo.setCurrentText("Professional English learner")
         self.click_text(self.window.tr("onboarding_assess"))
         self.click_text(self.window.tr("assessment_begin"))
         while self.window.assessment_record["status"] == "in_progress":
