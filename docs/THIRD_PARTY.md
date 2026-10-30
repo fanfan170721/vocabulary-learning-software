@@ -1,11 +1,11 @@
-# 依赖与素材说明
+# Dependencies and assets
 
-- Python 运行时：Python Software Foundation License，https://docs.python.org/3/license.html 。
-- PySide6 / Qt：采用随依赖提供的开源许可条款，https://doc.qt.io/qtforpython-6/licenses.html 。分发物应保留 Qt、PySide、Shiboken 和所用 Qt 组件的许可及必要声明，使用动态库形式；正式公开分发前复核该版本实际包含的组件。
-- LGPL/GPL 与 Python 许可文本保存在 `vocabulary_app/resources/licenses` 并随应用包分发。Qt 6.12 与 PySide6 6.12.0 的对应源代码可从 https://download.qt.io/official_releases/qt/ 和 https://download.qt.io/official_releases/QtForPython/pyside6/ 获取。应用包保留动态库文件，允许按许可替换兼容库。
-- PyInstaller 构建工具：GPL 加应用分发例外，https://pyinstaller.org/en/stable/license.html 。
-- 发音使用 Windows 已安装的 SAPI 语音；不打包或重新分发系统语音资源。缺少相应口音时显示缺失状态。
-- 原 180 个基础词条与新增 ECDICT 精选词条分别记录来源。ECDICT 固定版本 `ab22ad36302cafc6349a050e2b60894855208055` 使用上游 MIT 许可，完整许可保存在 `resources/licenses/ECDICT-MIT.txt`；实际范围与固定源文件哈希见 CONTENT.md。项目代码许可与原基础内容许可分别决定，不把所有资源统一标为 MIT。
-- 界面以白底、蓝粉强调和留白作为设计方向，使用基础控件和程序绘制图形，不复制第三方品牌标志、账号、宣传图或角色素材。
+- Python runtime: [Python Software Foundation License](https://docs.python.org/3/license.html).
+- PySide6 / Qt: use the [open-source license terms supplied with the dependencies](https://doc.qt.io/qtforpython-6/licenses.html). Distribution should retain the licenses and required notices for Qt, PySide, Shiboken, and the Qt components used, and use dynamic libraries. Review the components actually included in this version before public distribution.
+- LGPL/GPL and Python license texts are kept in `vocabulary_app/resources/licenses` and distributed with the bundle. Corresponding source for Qt 6.12 and PySide6 6.12.0 is available from the [Qt releases](https://download.qt.io/official_releases/qt/) and [Qt for Python releases](https://download.qt.io/official_releases/QtForPython/pyside6/). The bundle retains dynamic library files so compatible libraries can be replaced under their licenses.
+- PyInstaller build tool: [GPL with an application distribution exception](https://pyinstaller.org/en/stable/license.html).
+- Pronunciation uses installed Windows SAPI voices. System voice resources are not bundled or redistributed. A missing accent is reported as unavailable.
+- The original 180 seed entries and additional selected ECDICT entries have separate source records. Pinned ECDICT revision `ab22ad36302cafc6349a050e2b60894855208055` uses the upstream MIT license; the full text is retained in `resources/licenses/ECDICT-MIT.txt`. See CONTENT.md for the actual scope and pinned source hashes. Project code and original seed content licenses are separate decisions; all resources are not collectively labeled MIT.
+- The interface uses white backgrounds, blue/pink emphasis, and whitespace, with standard widgets and programmatically drawn shapes. It does not copy third-party brand marks, accounts, promotional images, or character assets.
 
-开发参考：Qt for Python 官方安装与 API 文档，PyInstaller 官方构建与运行时文档。开发工具和依赖不要求购买付费服务；程序没有广告、支付或订阅。
+Development references: official Qt for Python installation/API documentation and official PyInstaller build/runtime documentation. Development tools and dependencies do not require paid services. The app has no advertising, payments, or subscriptions.

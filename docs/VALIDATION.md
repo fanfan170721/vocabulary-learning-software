@@ -1,71 +1,84 @@
-# 阶段 1 与 0.2 改版验证记录
+# Phase 1 and version 0.2 validation record
 
-## 环境与交付物
+This document translates the validation evidence recorded for the original 0.2 implementation. Those historical results do not by themselves verify a rebuilt English-localized release. Any new localization checks should be recorded separately with their actual results.
 
-- Windows 11 x64（10.0.26200），Python 3.12.14，PySide6 6.12.0，PyInstaller 6.22.3。
-- 应用文件夹：`dist/VocabularyLearning/VocabularyLearning.exe`。0.2 已在本机实际构建并启动，包内内容文件与最终源码版本的SHA-256一致。
-- 包含 Python 运行时、SQLite、Qt Widgets、Windows 平台插件、SAPI 本地语音适配与全部核心内容资源。
-- 应用文件夹约 148 MB；保留完整文件夹后双击运行。当前交付不是安装向导，也尚未代码签名。
-- 构建排除了 PATH 中其他工具带入的同名 ICU 库，使用 Windows 系统 ICU；同时排除模拟及未使用的语音引擎。
+## English localization checks
 
-## 已运行的验证
+- English catalog version: `content-0.2.1-en`. The interface and all 1,274 bundled definitions have been translated while retaining the 1,080 lemma IDs and existing sense identities.
+- Six desktop integration tests passed for the English interface. This result is separate from the original release's 44-check historical record below.
+- Four English importer regression tests passed. A dry run using the full pinned source after SHA-256 verification produced 1,080 words and 1,180 senses with the intended per-level counts and no missing basic words, missing specialist terms, or level shortages. The bundled curated catalog retains 1,274 senses; regeneration uses different English source coverage.
+- A real profile generated with the original version retained all 27 non-profile records byte for byte. Its presentation contained no Han characters after localization. Original answers and scoring evidence were preserved rather than rewritten.
+- Stock legacy interface text adopts English defaults; personal names and custom text remain intact. Saved historical definitions, options, and responses are translated for display while their original records remain available for validation.
+- Native Windows Qt checks at 900×660 and 1,220×850 showed no horizontal scrolling on the home page. The long professional-learner self-rating and profile metric captions remained readable.
+- The final suite passed all **55 tests** on 2026-10-29, including all five assessment lengths, old archive compatibility, actual English startup, and readable long answers at the minimum window size. The startup test also verifies the English locale with the pinned PySide6 runtime.
+- The English Windows application was rebuilt with `scripts/build.ps1` and launched with a separate smoke-test profile. It stayed running, created an English profile, and included JSON resources matching the source byte for byte. The package includes the legacy translation resources. Historical bundle results below apply to the original build.
+- A representative review of 165 words across all 15 levels found no glaring translation errors against the original meanings. This sampling does not replace ongoing review of every definition.
 
-运行 `.venv\Scripts\python.exe -m unittest discover -s tests -v`：最终构建前 **44项全部通过**，包括高水平目标表单和最早旧档案兼容回归。音标缺失状态补充后，6项桌面集成测试再次通过。
+## Environment and deliverables
 
-0.2 新增验证：
+- Windows 11 x64 (10.0.26200), Python 3.12.14, PySide6 6.12.0, PyInstaller 6.22.3.
+- App folder: `dist/VocabularyLearning/VocabularyLearning.exe`. Version 0.2 was actually built and launched on the original machine. The bundled content file's SHA-256 matched the final source used for that build.
+- Includes the Python runtime, SQLite, Qt Widgets, Windows platform plugin, local SAPI speech adapter, and all core content resources.
+- App folder approximately 148 MB; keep the entire folder to launch by double-clicking. It is not an installation wizard and has not been code-signed.
+- The build excluded same-named ICU libraries brought into PATH by other tools and used Windows system ICU. Simulated and unused speech engines were also excluded.
 
-- 主页模块卡片可进入学习、错题、历史、成就、目标、待学与设置。模块中无侧栏、其他模块卡片、全局状态或主页目标条；返回主页后可继续同一学习会话。
-- 全新档案独立引导，快速自评直接设目标，或自选测评后确认结果再设目标。引导步骤和实际作答均可退出恢复，未完成目标设置不解锁主页。
-- 实际分发词库的 20/50/100/200/500 五种题量全部完整答完。500 题在第 237 题关闭、重新打开并导出导入后继续，独立词条无重复。
-- 原生 Windows Qt 界面实际完成 500 题，第 250 题退出窗口后重建，恢复同一道题和选项；最终500/500，覆盖15个等级，测评没有增加掌握词、练习量、错题或学习成就。
-- 500题界面起测约77ms，逐题处理平均111ms、P95约149ms、最大186ms；含绘制及一次重开总约70.5秒。该数据来自本机自动操作，不代表人工答题用时。
-- 原有已完成引导的档案继续进入主页；重新测评采用推荐难度后，旧目标、估计词量基线和学习记录不变。
-- 最早schema1缺少全部引导字段、但已含学习/目标的档案，可迁移为已完成引导并继续原题；所有非profile记录逐字保留。旧档案直接导入、再导出导入均通过独立复测。明确保存的False与空白旧档案仍进入引导。
-- 高水平测评的建议起点超过5000时，目标表单默认选更高的合理目标；用户后续手动改起点不会被悄悄改目标。
-- 当前内容为1080词元、1274义项，15级均有实际词：L1—L6各90，L7—L15各60。L15有60个标明领域的专业术语。原180词的稳定ID、义项和旧记录关联保持。
-- 最终内容另校验500个独立四选题及各级随机20词池共30000题，均有四个结构有效选项；语言质量仍需持续审校。
-- 最终0.2应用包在独立演示档案中恢复19/20测评，实际点击完成最后一题→结果→确认目标→主页→进入20词模块→返回主页，均通过。独立模块未显示设置、全局状态与目标条，返回后保留同一未完轮次；测评本身没有增加掌握或练习词数。
+## Previously completed verification
 
-| 检查 | 实际结果 |
+Running `.venv\Scripts\python.exe -m unittest discover -s tests -v` before the final original build passed **all 44 checks**, including high-level goal forms and compatibility with the earliest legacy profiles. After adding the missing-phonetics state, all six desktop integration tests passed again.
+
+Additional version 0.2 verification:
+
+- Home module cards opened learning, mistakes, history, achievements, goals, the queue, and settings. Modules had no sidebar, other module cards, global status, or home goal bar. Returning home allowed continuation of the same learning session.
+- New profiles had separate onboarding: quick self-rating directly to goal setup, or a selected assessment followed by result confirmation and goal setup. Onboarding steps and actual answers resumed after exit. The home page stayed locked until goal setup completed.
+- All five assessment sizes (20/50/100/200/500) in the distributed catalog were completed. The 500-question assessment was closed at question 237, reopened, exported/imported, and continued without repeated lemmas.
+- The native Windows Qt interface completed 500 questions. After closing at question 250 and rebuilding the window, the same question and options returned. Final score was 500/500 across 15 levels. Assessment added no mastered words, practice count, mistakes, or learning achievements.
+- Starting the 500-question assessment took about 77 ms. Per-question processing averaged 111 ms, with P95 about 149 ms and maximum 186 ms. Total including painting and one reopen was about 70.5 seconds. These measurements came from automated local operation, not human answering time.
+- Previously onboarded profiles continued home. Adopting reassessment difficulty left existing goals, estimated baseline, and learning records unchanged.
+- Earliest schema 1 profiles lacking all onboarding fields but already containing learning/goals migrated as onboarded and resumed the original question. All non-profile records were preserved byte for byte. Direct legacy import and export/reimport both passed separate retesting. Explicitly saved False and empty legacy profiles still entered onboarding.
+- When a high-level assessment suggested a baseline above 5,000, the goal form defaulted to a reasonable higher target. Later manual baseline edits did not silently change the target.
+- Content contained 1,080 lemmas and 1,274 senses across all 15 levels: 90 each at L1–L6, 60 each at L7–L15. L15 had 60 specialist terms labeled by field. Original 180-word IDs, senses, and legacy record relationships were retained.
+- Final original content also passed 500 independent four-choice questions and 30,000 questions from random 20-word pools across levels. Every question had four structurally valid options; language quality still required ongoing review.
+- In a separate demo profile, the final original 0.2 bundle resumed at 19/20 assessment progress. Completing the final question → results → goal confirmation → home → 20-word module → home worked. Separate modules showed no settings, global status, or goal bar. Returning preserved the same unfinished session. Assessment itself added no mastered or practice words.
+
+| Check | Recorded result |
 |---|---|
-| 完整 20 词流程 | 用真实业务层和实际 Qt 控件跑过总览、逐词、20 题、结果、错词重学、重测与结算 |
-| 5 词原本会 + 15 词首次学会 | 净新增 15，精确已掌握集合 20，估计从 1000 到 1015 |
-| 只剩一个错词 | 保留四个有效干扰/答案选项和“我不会”，从原 20 词池取选项 |
-| 中途恢复 | 关闭窗口、重新建立服务与窗口，恢复到原问题和实际选项，未完成不结算 |
-| 幂等与历史重做 | 重复完成、重启不多加词；重做保持原词条快照，不增加唯一词数或练习成就 |
-| 错题 | 曾经不会的词在最终答对后仍在错题本，保留不会和重试次数 |
-| 目标边界 | 目标外词、差一词、空词集、不完整词表、CET 使用测试词集均有回归检查 |
-| 导出/导入 | 活动会话、重学、最终结果可恢复；备份先保存；顺序保留；非法进度、伪造完成、凭据字段、非法目标/成就拒绝导入 |
-| 版本 | 内容更新不改历史题目和词集分母；兼容 schema 0 升级前备份 |
-| 成就 | 读取配置定义，首次开始独立记录，完成词次累计，重做不计 |
-| 首次设置 | 独立自评或测评→目标引导；用户确认起点，未确认不冒充已掌握词 |
-| 文案与输入 | 软件内编辑文案后标题、副标题、导航与目标按钮即时更新；数字输入不受测验快捷键影响；按住数字键不连续答题 |
-| 动画 | 重力、侧边/底部碰撞、有限生命周期；飞字指向错题本；减少动画不启动效果，不拦鼠标操作 |
+| Complete 20-word cycle | Real business logic and Qt widgets ran the overview, word learning, 20 questions, results, relearning, retesting, and completion. |
+| 5 already known + 15 newly learned | Net new 15, exact mastered set 20, estimated vocabulary increased from 1,000 to 1,015. |
+| One missed word remaining | Four valid answer/distractor options plus "I don't know", drawn from the original 20-word pool. |
+| Resume midway | Closing the window and rebuilding the service/window restored the original question and actual options. Unfinished sessions did not complete. |
+| Idempotence and historical replay | Repeated completion and restart did not add words. Replay retained original snapshots and did not increase unique words or practice achievements. |
+| Mistakes | Previously unknown words stayed in the notebook after eventual correct answers, with unknown and retry counts retained. |
+| Goal boundaries | Regression checks covered outside words, one missing word, empty sets, incomplete lists, and a sample set used for CET. |
+| Export/import | Active sessions, relearning, and final results resumed; backups were saved first; order was preserved. Invalid progress, forged completion, credential fields, and invalid goals/achievements were rejected. |
+| Versions | Content upgrades did not alter historical questions or word set denominators. Compatible schema 0 migration backed up first. |
+| Achievements | Definitions were read from configuration. First start was separate. Completed word practices accumulated; replays did not count. |
+| First-use setup | Separate self-rating or assessment → goal onboarding. Users confirmed baselines; unconfirmed estimates were not treated as mastered words. |
+| Text and input | Editing text in the app immediately updated titles, subtitles, navigation, and goal buttons. Numeric inputs were not affected by quiz shortcuts. Holding a digit did not repeatedly answer questions. |
+| Animation | Gravity, side/bottom collisions, finite lifetime, flight toward the mistake collection. Reduced motion suppressed effects, and effects did not block mouse input. |
 
-另在实际打包程序中用独立演示档案点通“恢复错词 → 重测 → 全对结算”，界面显示新学 15、原本会 5、练习 20。退出后用最终应用包重新打开，1015 估计词量、20 个已掌握词、15 个净新增和错题记录仍存在。演示档案在 `artifacts/bundle-smoke`，不会写入个人默认档案。
+The actual original packaged app also completed "resume missed words → retest → all-correct completion" in a separate demo profile. The interface showed 15 newly learned, 5 already known, and 20 practiced words. Reopening the final original bundle retained estimated vocabulary 1,015, 20 mastered words, 15 net new words, and mistake records. The demo profile was in `artifacts/bundle-smoke` and did not write to the default personal profile.
 
-## 发音与联网
+## Pronunciation and networking
 
-- 本机 Windows SAPI 的 Microsoft Zira Desktop 美式英语可用；Qt 实际调用成功。本地合成“vocabulary”另生成 75,644 字节 WAV，验证不是占位播放。
-- 本机没有英式英语语音。切换英音会显示缺少本地语音，不用其他口音冒充，也不会在线下载或发起远程播放。
-- 完整 Qt 流程在禁止 Python 网络连接的测试条件下运行；本机打包进程检查未观察到 TCP 连接。首版没有 HTTP 客户端、模型调用、同步或远程发音实现。
-- **尚未执行物理断网后的人工验收**。以上检查不能代替关闭网络后从零完成整轮、重开和朗读的验证。
+- Microsoft Zira Desktop American English was available through Windows SAPI on the original machine, and actual Qt calls succeeded. A separate local synthesis of "vocabulary" produced a 75,644-byte WAV, confirming real playback rather than a placeholder.
+- The original machine lacked a British English voice. Selecting British English showed the missing local voice state instead of substituting another accent, downloading online, or playing remotely.
+- The complete Qt flow ran with Python network connections blocked. No TCP connections were observed for the local bundled process. The initial release has no HTTP client, model calls, synchronization, or remote pronunciation implementation.
+- **Manual acceptance after physically disconnecting the network had not been performed.** The checks above do not replace verifying a full session, reopen, and pronunciation with the network turned off.
 
-## 当前限制与发布前待办
+## Limitations and release tasks
 
-- 尚未在未装开发环境的另一台 Windows 机器上验证；当前仅在本机启动了包含运行时的应用包。发布前需在独立机器验证启动、离线学习、保存与重开。
-- 正式完整四级词表未安装，绝不显示正式四级目标已完成。原180词使用内部内容许可标识，新增900词按固定版本ECDICT的MIT许可记录；正式公开发布前需持续审校内容及核对许可。
-- 当前29个新增词条的来源未给出音标，界面显示“音标暂未收录”，仍可调用本地语音；不会补造读音。原有基础词音标、来源中的英式与旧式标音仍需继续统一和审校。
-- 15级均有实际精选词，但它们是可配置、未校准的内部等级。已支持五种题量的自适应词义测评；标准化校准、其他技能测量、阅读、写作、3D与AI调用留在后续路线图。
-- 当前网络策略仅保存偏好并明确显示本地状态。未来接入具体线上服务时，再实现服务可用性与 Wi-Fi 策略，不以联网状态代替 AI 授权。
-- 估计词量在有学习记录或目标后不能直接重设；重新评测与重设基线对活动目标的影响留到阶段 2 确认。
-- 代码、构建与验证均保留本地，没有执行 Git 提交、推送或公开部署。
+- No verification on another Windows machine without a development environment had been performed. Only the original machine had launched the runtime-inclusive bundle. Before release, verify startup, offline learning, saving, and reopening on an independent machine.
+- The official complete CET-4 list is not installed, so no official CET-4 goal may be shown complete. Original 180-word content uses an internal license identifier; the additional 900 words record the pinned ECDICT MIT license. Continue content review and license checks before public release.
+- The source did not supply phonetics for 29 added entries. The interface reports "Phonetics not available", while local speech can still be used. Pronunciations are not invented. Original seed phonetics and the source's British/older notation still need consistency review.
+- All 15 levels contain selected real words but are configurable, uncalibrated internal levels. Five adaptive assessment sizes are supported. Standardized calibration, other skill measurements, reading, writing, 3D, and AI requests remain on the roadmap.
+- Current network policies save preferences and explicitly show local operation. Concrete online services must later implement availability and Wi-Fi policy. Connectivity does not substitute for AI authorization.
+- Estimated vocabulary cannot be directly reset after learning records or goals exist. Effects of reassessment and baseline resets on active goals remain a phase 2 decision.
+- The original code, build, and verification were kept locally without Git commits, pushes, or public deployment. This is historical evidence, rather than a statement about subsequent repository actions.
 
-## 人工验收步骤
+## Manual acceptance steps
 
-1. 关闭网络，双击应用，设置学习起点和目标。
-2. 总览勾 5 个原本已会；逐词学习；首轮故意选一次“我不会”。
-3. 中途退出并重开，确认题目和选项恢复；完成后重学并重测错词。
-4. 全对结算，检查净新增 15、错题和目标；再重开确认不重复结算。
-5. 设置里导出记录，用独立档案导入检查；不要拿演示数据覆盖个人学习档案。
-
+1. Turn off networking, double-click the app, and set a learning baseline and goal.
+2. Mark 5 words as already known in the overview, study words individually, and deliberately choose "I don't know" once in the first quiz.
+3. Exit midway and reopen. Confirm the question and options return, then relearn and retest missed words.
+4. Complete with all answers correct. Check net new 15, mistakes, and goal progress. Reopen again and confirm completion is not counted twice.
+5. Export records in Settings and verify importing them into a separate profile. Do not overwrite a personal study profile with demo data.

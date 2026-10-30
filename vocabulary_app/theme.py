@@ -72,7 +72,7 @@ def stylesheet(theme):
     QPushButton#moduleCard:focus {{ border: 2px solid {t['blue_dark']}; }}
     QPushButton#moduleCard[featured="true"] {{ background: #FAFDFE; border-color: #D9EDF5; }}
     QPushButton#moduleCard[featured="true"]:hover {{ background: #F3FBFE; border-color: #9DD8ED; }}
-    QPushButton#answer {{ text-align: left; padding: 17px 22px; font-size: 18px; }}
+    QPushButton#answer {{ text-align: left; padding: 0; font-size: 18px; }}
     QPushButton#quiet {{ border: none; color: {t['blue_dark']}; background: transparent; padding: 5px 7px; }}
     QPushButton#quiet:hover {{ background: {t['blue_light']}; }}
     QPushButton#quiet:focus {{ border: 1px solid {t['blue_dark']}; }}

@@ -11,12 +11,41 @@ import uuid
 
 ALGORITHM_VERSION = "anchored-logistic-1"
 QUESTION_COUNTS = (20, 50, 100, 200, 500)
-RATINGS = ("刚开始学", "只会一点", "初级", "中级", "高级", "熟练", "本地人", "专业英语学习人")
+RATINGS = ("Just starting", "Know a little", "Beginner", "Intermediate", "Advanced", "Proficient", "Native speaker", "Professional English learner")
 RATING_LEVELS = (1, 2, 3, 5, 8, 11, 12, 12)
+LEGACY_RATINGS = dict(zip((
+    "\u521a\u5f00\u59cb\u5b66", "\u53ea\u4f1a\u4e00\u70b9", "\u521d\u7ea7", "\u4e2d\u7ea7", "\u9ad8\u7ea7", "\u719f\u7ec3", "\u672c\u5730\u4eba", "\u4e13\u4e1a\u82f1\u8bed\u5b66\u4e60\u4eba",
+), RATINGS))
+UNKNOWN_ANSWER = "I don't know"
+LEGACY_UNKNOWN_ANSWER = "\u6211\u4e0d\u4f1a"
+
+
+def normalize_rating(value):
+    """Keep profiles and archives created before the English interface usable."""
+    return LEGACY_RATINGS.get(value, value)
+
+
+def choice_matches(options, option_id, text):
+    if option_id is None:
+        return text in (UNKNOWN_ANSWER, LEGACY_UNKNOWN_ANSWER)
+    return text == options.get(option_id)
+
+
+def _legacy_estimate(record):
+    """Validate the exact display text stored by the previous release."""
+    result = estimate(record)
+    result["confidence"] = "\u8f83\u4f4e" if result["confidence"] == "Low" else "\u4e00\u822c"
+    recommended, levels = result["recommended_level"], record["available_levels"]
+    result["summary"] = (
+        f"\u672c\u6b21\u6d4b\u8bc4\u63d0\u4f9b L{recommended} \u7684\u8bcd\u4e49\u8bc6\u522b\u96be\u5ea6\u53c2\u8003\uff1b"
+        f"\u5b9e\u9645\u9898\u5e93\u8986\u76d6 L{min(levels)}\u2014L{max(levels)}\uff0c\u5c1a\u672a\u6807\u51c6\u5316\u6821\u51c6\u3002"
+        "\u8bcd\u91cf\u533a\u95f4\u4ec5\u4f5c\u8bbe\u7f6e\u8d77\u70b9\u7684\u53c2\u8003\uff0c\u5176\u4ed6\u6280\u80fd\u5c1a\u672a\u6d4b\u91cf\u3002"
+    )
+    return result
 
 
 def _tokens(text):
-    return {re.sub(r"\s+", "", value).casefold() for value in re.split(r"[;；,，、/（）()\n]", text) if value.strip()}
+    return {re.sub(r"\s+", "", value).casefold() for value in re.split(r"[;\uff1b,\uff0c\u3001/\uff08\uff09()\n]", text) if value.strip()}
 
 
 def _eligible_words(words):
@@ -83,7 +112,7 @@ def estimate(record):
     ranges = record["level_ranges"]
     estimated_range = [ranges[str(lower_level)][0], ranges[str(upper_level)][1]]
     answered = len(record["answers"])
-    confidence = "较低" if answered < 50 or upper - lower > 3 else "一般"
+    confidence = "Low" if answered < 50 or upper - lower > 3 else "Moderate"
     limited = min(levels) > 1 or max(levels) < 15 or upper >= max(levels)
     covered = sorted({answer["level"] for answer in record["answers"]})
     return {
@@ -93,9 +122,9 @@ def estimate(record):
         "available_levels": list(levels), "limited_by_content": limited,
         "standardized": False, "answered_count": answered,
         "recognition_only": True,
-        "summary": (f"本次测评提供 L{recommended} 的词义识别难度参考；"
-                    f"实际题库覆盖 L{min(levels)}—L{max(levels)}，尚未标准化校准。"
-                    "词量区间仅作设置起点的参考，其他技能尚未测量。"),
+        "summary": (f"This assessment suggests L{recommended} as a reference difficulty for word-meaning recognition. "
+                    f"The available question bank covers L{min(levels)}\u2013L{max(levels)} and has not been standardized. "
+                    "The vocabulary range is a reference for choosing a starting point. Other skills have not been measured."),
     }
 
 
@@ -115,7 +144,7 @@ def _next_level(record):
     used = {question["word_id"] for question in record["questions"]}
     available = {level for level in levels if any(word["level"] == level and word["id"] not in used for word in record["word_bank"])}
     if not available:
-        raise ValueError("独立题库已用完，不能重复题目补足测评数量。")
+        raise ValueError("No unused questions remain. Questions cannot be repeated to reach the assessment count.")
     anchors = _anchor_schedule(record)
     if len(record["answers"]) < len(anchors):
         desired = anchors[len(record["answers"])]
@@ -140,17 +169,18 @@ def next_question(record, question_factory):
             return question
         except ValueError:
             continue
-    raise ValueError("当前难度的词条无法组成清楚的四选一题目，请完善词库。")
+    raise ValueError("The entries at this difficulty cannot produce four distinct answer options. Update the vocabulary pack.")
 
 
 def create(words, content_version, self_rating, question_count, level_config, question_factory, timestamp):
+    self_rating = normalize_rating(self_rating)
     if self_rating not in RATINGS:
-        raise ValueError("请选择可用的自评选项。")
+        raise ValueError("Choose one of the available self-ratings.")
     if type(question_count) is not int or question_count not in QUESTION_COUNTS:
-        raise ValueError("测评题量请选择 20、50、100、200 或 500。")
+        raise ValueError("Choose an assessment length of 20, 50, 100, 200, or 500 questions.")
     eligible = deepcopy(_eligible_words(words))
     if len(eligible) < question_count:
-        raise ValueError(f"当前有 {len(eligible)} 个独立有效词条，不足 {question_count} 题。请先安装更多题库；不会重复题目凑数。")
+        raise ValueError(f"There are {len(eligible)} distinct usable entries, fewer than {question_count} questions. Install more content first; questions will not be repeated.")
     levels = sorted({word["level"] for word in eligible})
     configured_ranges = {int(item["level"]): list(item["estimated_range"]) for item in level_config.get("levels", [])}
     ranges = {str(level): configured_ranges.get(level, [max(0, (level - 1) * 500), level * 500]) for level in levels}
@@ -176,14 +206,14 @@ def answer(record, option_id, question_factory, timestamp):
     question = record["question"]
     choices = {option["id"]: option["text"] for option in question["options"]}
     if option_id is not None and option_id not in choices:
-        raise ValueError("测评题目已经变化，请按当前题目作答。")
+        raise ValueError("The assessment question has changed. Answer the current question.")
     updated = deepcopy(record)
     correct = option_id == question["correct_option_id"]
     updated["answers"].append({
         "id": str(uuid.uuid4()), "question_id": question["id"], "word_id": question["word_id"],
         "level": question["level"], "option_id": option_id, "correct": correct,
         "kind": "correct" if correct else "unknown" if option_id is None else "wrong",
-        "choice_text": choices.get(option_id, "我不会"),
+        "choice_text": choices.get(option_id, UNKNOWN_ANSWER),
         "answer_text": choices[question["correct_option_id"]], "at": timestamp,
     })
     updated["answered_count"] = len(updated["answers"])
@@ -203,8 +233,8 @@ def answer(record, option_id, question_factory, timestamp):
 def validate(record, validate_content):
     """Reject inconsistent archives before they can change local records."""
     def fail():
-        raise ValueError("测评档案的题目、作答或完成结果不一致。")
-    if record.get("algorithm_version") != ALGORITHM_VERSION or record.get("self_rating") not in RATINGS:
+        raise ValueError("The assessment archive contains inconsistent questions, answers, or results.")
+    if record.get("algorithm_version") != ALGORITHM_VERSION or normalize_rating(record.get("self_rating")) not in RATINGS:
         fail()
     if type(record.get("question_count")) is not int or record["question_count"] not in QUESTION_COUNTS:
         fail()
@@ -257,11 +287,11 @@ def validate(record, validate_content):
                 fail()
             correct = option_id == question["correct_option_id"]
             kind = "correct" if correct else "unknown" if option_id is None else "wrong"
-            if type(response["correct"]) is not bool or response["correct"] != correct or response["kind"] != kind or response["choice_text"] != options.get(option_id, "我不会") or response["answer_text"] != sense["definition"]:
+            if type(response["correct"]) is not bool or response["correct"] != correct or response["kind"] != kind or not choice_matches(options, option_id, response["choice_text"]) or response["answer_text"] != sense["definition"]:
                 fail()
             prefix["answers"].append(response)
     if record["status"] == "complete":
-        if len(answers) != record["question_count"] or len(questions) != len(answers) or record["question"] is not None or not record["completed_at"] or record["result"] != estimate(record):
+        if len(answers) != record["question_count"] or len(questions) != len(answers) or record["question"] is not None or not record["completed_at"] or (record["result"] != estimate(record) and record["result"] != _legacy_estimate(record)):
             fail()
     elif record["status"] == "in_progress":
         if len(answers) >= record["question_count"] or len(questions) != len(answers) + 1 or record["question"] != questions[-1] or record["completed_at"] is not None or record["result"]:

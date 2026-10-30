@@ -11,13 +11,14 @@ def main() -> int:
     parser.add_argument("--data-dir", type=Path, help="Use a separate local profile directory")
     args = parser.parse_args()
 
-    from PySide6.QtCore import QLockFile, QStandardPaths
+    from PySide6.QtCore import QLocale, QLockFile, QStandardPaths
     from PySide6.QtWidgets import QApplication, QMessageBox
 
     from vocabulary_app.core import AppService
     from vocabulary_app.speech import LocalSpeech
     from vocabulary_app.ui import MainWindow
 
+    QLocale.setDefault(QLocale("en_US"))
     app = QApplication(sys.argv[:1])
     app.setApplicationName("VocabularyLearning")
     app.setOrganizationName("VocabularyLearning")
@@ -27,7 +28,7 @@ def main() -> int:
     lock = QLockFile(str(data_dir / "application.lock"))
     lock.setStaleLockTime(0)
     if not lock.tryLock(100):
-        QMessageBox.information(None, "单词学习", "这个学习档案已经打开。请使用已打开的窗口。")
+        QMessageBox.information(None, "Vocabulary Learning", "This learning profile is already open. Use the existing window.")
         return 0
     try:
         service = AppService(data_dir=data_dir)
@@ -38,7 +39,7 @@ def main() -> int:
         app.aboutToQuit.connect(service.close)
         return app.exec()
     except Exception as error:
-        QMessageBox.critical(None, "无法启动", str(error))
+        QMessageBox.critical(None, "Unable to start", str(error))
         return 1
     finally:
         lock.unlock()

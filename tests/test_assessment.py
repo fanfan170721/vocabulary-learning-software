@@ -19,7 +19,7 @@ class AssessmentTests(unittest.TestCase):
         words = [{
             "id": f"fixture-{index:04d}", "lemma": f"fixtureword{index}", "language": "en",
             "phonetic": "/test/", "level": index // 40 + 1,
-            "senses": [{"id": f"fixture-sense-{index}", "pos": "noun", "definition": f"测试释义{index:04d}", "language": "zh-CN"}],
+            "senses": [{"id": f"fixture-sense-{index}", "pos": "noun", "definition": f"Test definition {index:04d}", "language": "en"}],
             "source": "Independent test fixture", "license": "test-only",
         } for index in range(600)]
         self.content = {"version": "fixture-600", "words": words, "word_sets": []}
@@ -56,7 +56,7 @@ class AssessmentTests(unittest.TestCase):
         self.assertEqual(QUESTION_COUNTS, (20, 50, 100, 200, 500))
         for count in QUESTION_COUNTS:
             service = AppService(self.root / f"count-{count}", self.resources)
-            record = service.start_assessment("初级", count)
+            record = service.start_assessment("Beginner", count)
             self.assertEqual(record["question_count"], count)
             self.assertEqual(record["answered_count"], 0)
             self.assertEqual(len(record["question"]["options"]), 4)
@@ -64,9 +64,9 @@ class AssessmentTests(unittest.TestCase):
             service.close()
 
     def test_fast_assessment_has_anchors_then_adaptive_questions_without_learning_credit(self):
-        self.service.set_onboarding_rating("初级", use_assessment=True)
+        self.service.set_onboarding_rating("Beginner", use_assessment=True)
         before = self.service.snapshot()
-        record = self.finish_assessment(self.service.start_assessment("初级", 20))
+        record = self.finish_assessment(self.service.start_assessment("Beginner", 20))
         phases = [q["selection_phase"] for q in record["questions"]]
         self.assertEqual(phases.count("anchor"), 6)
         self.assertEqual(phases.count("adaptive"), 14)
@@ -79,8 +79,8 @@ class AssessmentTests(unittest.TestCase):
         self.assertEqual(self.service.snapshot()["profile"]["onboarding_step"], "assessment_result")
 
     def test_500_question_assessment_resumes_exactly_and_completes_without_repeats(self):
-        self.service.set_onboarding_rating("中级")
-        record = self.service.start_assessment("中级", 500)
+        self.service.set_onboarding_rating("Intermediate")
+        record = self.service.start_assessment("Intermediate", 500)
         for index in range(237):
             record = self.service.answer_assessment(record["id"], None if index % 7 == 0 else record["question"]["correct_option_id"])
         pending = deepcopy(record["question"])
@@ -107,14 +107,14 @@ class AssessmentTests(unittest.TestCase):
         self.content["words"] = self.content["words"][:100]
         (self.resources / "content.json").write_text(json.dumps(self.content), encoding="utf-8")
         service = AppService(self.root / "small", self.resources)
-        with self.assertRaisesRegex(ValueError, "不足 200"):
-            service.start_assessment("初级", 200)
+        with self.assertRaisesRegex(ValueError, "fewer than 200"):
+            service.start_assessment("Beginner", 200)
         self.assertIsNone(service.assessment())
         service.close()
 
     def test_quick_self_rating_can_resume_goal_step_and_finish_atomically(self):
         self.assertEqual(self.service.snapshot()["profile"]["onboarding_step"], "self_rating")
-        profile = self.service.set_onboarding_rating("本地人", name="测试学习者", use_assessment=False)
+        profile = self.service.set_onboarding_rating("Native speaker", name="Test learner", use_assessment=False)
         self.assertEqual(profile["onboarding_step"], "goal")
         self.assertEqual(profile["difficulty"], 12)
         self.assertIsNone(profile["abilities"]["listening"]["value"])
@@ -133,8 +133,8 @@ class AssessmentTests(unittest.TestCase):
         self.assertEqual(state["goals"][0]["numerator"], 0)
 
     def test_completed_assessment_requires_acceptance_and_user_confirmed_starting_count(self):
-        self.service.set_onboarding_rating("初级")
-        record = self.finish_assessment(self.service.start_assessment("初级", 20), correct=False)
+        self.service.set_onboarding_rating("Beginner")
+        record = self.finish_assessment(self.service.start_assessment("Beginner", 20), correct=False)
         self.assertEqual(self.service.snapshot()["profile"]["onboarding_step"], "assessment_result")
         with self.assertRaises(ValueError):
             self.service.finish_onboarding("word_count", baseline=100, target=5000)
@@ -148,12 +148,12 @@ class AssessmentTests(unittest.TestCase):
         self.assertEqual(state["stats"]["estimated_vocabulary"], 275)
 
     def test_existing_user_can_adopt_only_recommended_difficulty(self):
-        self.service.set_onboarding_rating("初级", use_assessment=False)
+        self.service.set_onboarding_rating("Beginner", use_assessment=False)
         self.service.finish_onboarding("word_count", baseline=1000, target=5000)
         self.finish_learning()
         before = self.service.snapshot()
         history = self.service.history()
-        record = self.finish_assessment(self.service.start_assessment("高级", 20), correct=False)
+        record = self.finish_assessment(self.service.start_assessment("Advanced", 20), correct=False)
         profile = self.service.accept_assessment(record["id"])
         after = self.service.snapshot()
         self.assertTrue(profile["onboarding_complete"])
@@ -168,7 +168,7 @@ class AssessmentTests(unittest.TestCase):
             self.service.finish_onboarding("word_count", baseline=0, target=100)
 
     def test_one_wrong_answer_does_not_halve_the_recommendation(self):
-        record = self.service.start_assessment("中级", 20)
+        record = self.service.start_assessment("Intermediate", 20)
         for _ in range(12):
             record = self.service.answer_assessment(record["id"], record["question"]["correct_option_id"])
         previous = estimate(record)["recommended_level"]
@@ -177,7 +177,7 @@ class AssessmentTests(unittest.TestCase):
         self.assertLessEqual(previous - current, 3)
 
     def test_archive_rejects_forged_assessment_and_preserves_current_answers(self):
-        record = self.service.start_assessment("初级", 20)
+        record = self.service.start_assessment("Beginner", 20)
         self.service.answer_assessment(record["id"], None)
         archive = self.root / "assessment.json"
         self.service.export_data(archive)
@@ -190,6 +190,37 @@ class AssessmentTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self.service.import_data(archive)
         self.assertEqual(self.service.assessment()["answered_count"], 1)
+
+    def test_previous_language_assessment_archive_keeps_scores_and_shows_english_results(self):
+        record = self.finish_assessment(self.service.start_assessment("Beginner", 20), correct=False)
+        expected_result = deepcopy(record["result"])
+        archive = self.root / "legacy-assessment.json"
+        self.service.export_data(archive)
+        payload = json.loads(archive.read_text(encoding="utf-8"))
+        archived = next(item["data"] for item in payload["records"] if item["kind"] == "assessment")
+        archived["self_rating"] = "\u521d\u7ea7"
+        for answer in archived["answers"]:
+            answer["choice_text"] = "\u6211\u4e0d\u4f1a"
+        recommended = archived["result"]["recommended_level"]
+        levels = archived["available_levels"]
+        archived["result"]["confidence"] = "\u8f83\u4f4e"
+        archived["result"]["summary"] = (
+            f"\u672c\u6b21\u6d4b\u8bc4\u63d0\u4f9b L{recommended} \u7684\u8bcd\u4e49\u8bc6\u522b\u96be\u5ea6\u53c2\u8003\uff1b"
+            f"\u5b9e\u9645\u9898\u5e93\u8986\u76d6 L{min(levels)}\u2014L{max(levels)}\uff0c\u5c1a\u672a\u6807\u51c6\u5316\u6821\u51c6\u3002"
+            "\u8bcd\u91cf\u533a\u95f4\u4ec5\u4f5c\u8bbe\u7f6e\u8d77\u70b9\u7684\u53c2\u8003\uff0c\u5176\u4ed6\u6280\u80fd\u5c1a\u672a\u6d4b\u91cf\u3002"
+        )
+        archive.write_text(json.dumps(payload), encoding="utf-8")
+        self.service.import_data(archive)
+        view = self.service.assessment(record["id"])
+        self.assertEqual(view["self_rating"], "Beginner")
+        self.assertEqual(view["result"], expected_result)
+        self.assertEqual(view["answers"][0]["choice_text"], "I don't know")
+        with self.service.store.connect() as connection:
+            stored = self.service.store.get(connection, "assessment", record["id"])
+        self.assertEqual(stored["result"], archived["result"])
+        self.assertEqual(stored["answers"], archived["answers"])
+        self.service.accept_assessment(record["id"])
+        self.assertEqual(self.service.snapshot()["profile"]["abilities"]["recognition"]["confidence"], "Low")
 
     def test_legacy_export_without_onboarding_step_remains_compatible(self):
         self.service.update_profile(onboarding_complete=True, estimated_vocabulary=1000)
@@ -270,7 +301,7 @@ class AssessmentTests(unittest.TestCase):
         self.assertFalse(self.service.snapshot()["profile"]["onboarding_complete"])
 
     def test_explicit_unfinished_onboarding_is_not_inferred_complete_from_usage(self):
-        self.service.set_onboarding_rating("初级", use_assessment=False)
+        self.service.set_onboarding_rating("Beginner", use_assessment=False)
         self.service.configure_goal("word_count", baseline=1000, target=5000)
         self.service.start_session()
         archive = self.root / "explicit-false.json"
@@ -291,7 +322,7 @@ class BundledAssessmentTests(unittest.TestCase):
             for count in QUESTION_COUNTS:
                 with self.subTest(question_count=count):
                     service = AppService(root / str(count))
-                    record = service.start_assessment("初级", count)
+                    record = service.start_assessment("Beginner", count)
                     self.assertEqual(record["available_levels"], list(range(1, 16)))
                     while record["status"] == "in_progress":
                         if count == 500 and record["answered_count"] == 237:

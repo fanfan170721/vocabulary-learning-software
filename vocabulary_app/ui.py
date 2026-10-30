@@ -2,6 +2,7 @@
 
 import json
 from datetime import datetime
+from hashlib import sha256
 from pathlib import Path
 
 from PySide6.QtCore import QPointF, QSize, Qt, QTimer
@@ -16,17 +17,17 @@ from PySide6.QtWidgets import (
 )
 
 from .animations import CelebrationOverlay, notebook_icon
+from .assessment import RATINGS
 from .theme import load_theme, stylesheet
 from .visuals import BadgeIcon, LearningIllustration, ModuleIcon
 
 
-RATINGS = ["刚开始学", "只会一点", "初级", "中级", "高级", "熟练", "本地人", "专业英语学习人"]
-NETWORKS = [("强制离线", "offline"), ("自动", "auto"), ("在线优先", "online_first")]
-ACCENTS = [("美式英语", "en-US"), ("英式英语", "en-GB")]
+NETWORKS = [("Offline only", "offline"), ("Automatic", "auto"), ("Online first", "online_first")]
+ACCENTS = [("American English", "en-US"), ("British English", "en-GB")]
 
 
 def meanings(word):
-    return "；".join(
+    return "; ".join(
         f"{sense.get('pos', '')}  {sense.get('definition', '')}".strip()
         for sense in word.get("senses", [])
     )
@@ -49,6 +50,23 @@ def clear_layout(layout):
             item.widget().deleteLater()
         elif item.layout():
             clear_layout(item.layout())
+
+
+class WrappedAnswerButton(QPushButton):
+    """Keep all lines visible when an English definition wraps."""
+
+    def sizeHint(self):
+        hint = super().sizeHint()
+        if self.layout():
+            hint.setHeight(max(hint.height(), self.layout().sizeHint().height()))
+        return hint
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if self.layout():
+            height = self.layout().totalHeightForWidth(event.size().width())
+            if height > 0 and height != self.minimumHeight():
+                self.setMinimumHeight(height)
 
 
 class MainWindow(QMainWindow):
@@ -96,7 +114,11 @@ class MainWindow(QMainWindow):
             try:
                 custom = json.loads(self.text_path.read_text(encoding="utf-8"))
                 if isinstance(custom, dict) and all(isinstance(k, str) and isinstance(v, str) for k, v in custom.items()):
-                    texts.update(custom)
+                    legacy_hashes = json.loads((self.resource_dir / "legacy_ui_text_hashes.json").read_text(encoding="utf-8"))
+                    # The editor used to save a full copy of the default text.
+                    # Upgrade those stock values while retaining personal edits.
+                    texts.update({key: value for key, value in custom.items()
+                                  if sha256(value.encode("utf-8")).hexdigest() != legacy_hashes.get(key)})
             except (ValueError, OSError):
                 pass
         return texts
@@ -121,6 +143,23 @@ class MainWindow(QMainWindow):
             button.setObjectName("quiet")
         button.setCursor(Qt.CursorShape.PointingHandCursor)
         button.clicked.connect(lambda checked=False: callback())
+        return button
+
+    def _answer_button(self, index, option, callback):
+        button = WrappedAnswerButton()
+        button.setCursor(Qt.CursorShape.PointingHandCursor)
+        button.clicked.connect(lambda checked=False: callback())
+        button.setObjectName("answer")
+        button.setProperty("optionId", option["id"])
+        button.setAccessibleName(f"Answer {index + 1} {option.get('text', '')}")
+        button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        layout = QHBoxLayout(button)
+        layout.setContentsMargins(22, 17, 22, 17)
+        label = self._label(f"{index + 1}   {option.get('text', '')}", wrap=True)
+        label.setStyleSheet("font-size: 18px;")
+        label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
+        layout.addWidget(label)
         return button
 
     def _card(self, title=None, parent_layout=None):
@@ -240,8 +279,8 @@ class MainWindow(QMainWindow):
         self.scene_title.setText(self.tr(scene_keys.get(self.page, "app_title")))
         if hasattr(self.speech, "select_language"):
             self.speech.select_language(settings.get("english_variant", "en-US"))
-        self.user_label.setText(profile.get("name") or "学习者")
-        network = dict((value, text) for text, value in NETWORKS).get(settings.get("network_mode"), "强制离线")
+        self.user_label.setText(profile.get("name") or "Learner")
+        network = dict((value, text) for text, value in NETWORKS).get(settings.get("network_mode"), "Offline only")
         self.mode_label.setText("●  " + self.tr("local_learning"))
         self.mode_label.setToolTip(f"{network} · " + self.tr("network_note"))
         goals = self.current_data.get("goals", [])
@@ -252,7 +291,7 @@ class MainWindow(QMainWindow):
             self.footer_title.setText(goal.get("title", self.tr("goals_title")))
             self.footer_description.setText(self._goal_summary(goal))
             self.footer_progress.setValue(int(ratio * 10000) if available else 0)
-            self.footer_value.setText(self._ratio_text(goal) if available else "待安装")
+            self.footer_value.setText(self._ratio_text(goal) if available else "Not installed")
             self.footer.setToolTip(goal.get("message", "") or self._goal_summary(goal))
         else:
             self.footer_title.setText(self.tr("goals_title"))
@@ -264,7 +303,7 @@ class MainWindow(QMainWindow):
     def _ratio_text(goal):
         ratio = max(0.0, min(1.0, float(goal.get("ratio", 0) or 0)))
         if ratio >= 1 and not goal.get("completed", False):
-            return "未完成"
+            return "Incomplete"
         if 0 < ratio < 1 and ratio * 100 >= 99.99:
             return "< 100%"
         percentage = f"{ratio * 100:.3f}".rstrip("0").rstrip(".")
@@ -277,8 +316,8 @@ class MainWindow(QMainWindow):
         denominator = goal.get("denominator", 0)
         remaining = goal.get("remaining", max(0, denominator - numerator))
         if goal.get("kind") in ("word_set", "cet4"):
-            return f"已会 {numerator} / {denominator} 词  ·  尚余 {remaining} 词  ·  达成条件 100%"
-        return f"新增 {numerator} / {denominator} 词  ·  当前估计 {goal.get('current', 0)} / {goal.get('target', 0)} 词"
+            return f"{numerator} / {denominator} mastered  ·  {remaining} remaining  ·  100% required"
+        return f"{numerator} / {denominator} new words  ·  Estimated total {goal.get('current', 0)} / {goal.get('target', 0)}"
 
     def show_page(self, page):
         onboarding_complete = self.service.snapshot().get("profile", {}).get("onboarding_complete", False)
@@ -387,10 +426,10 @@ class MainWindow(QMainWindow):
         heading_text = QVBoxLayout()
         heading_text.setSpacing(6)
         heading_text.addWidget(self._label(self.tr("home_title"), "pageTitle"))
-        heading_text.addWidget(self._label(self.tr("home_subtitle"), "muted"))
+        heading_text.addWidget(self._label(self.tr("home_subtitle"), "muted", True))
         heading.addLayout(heading_text, 1)
         word_count = snapshot.get("content", {}).get("word_count", 0)
-        heading.addWidget(self._label(self.tr("local_catalog") + f"  ·  {word_count:,}", "neutralTag"))
+        heading.addWidget(self._label(self.tr("local_catalog") + f"  ·  {word_count:,}", "neutralTag", True))
         self.body_layout.addLayout(heading)
         feature_row = QHBoxLayout()
         feature_row.setSpacing(18)
@@ -407,7 +446,7 @@ class MainWindow(QMainWindow):
         labels = QVBoxLayout()
         labels.setSpacing(1)
         labels.addWidget(self._label(self.tr("profile_difficulty"), "eyebrow"))
-        labels.addWidget(self._label(profile.get("self_rating", self.tr("setup_unset")), "cardDetail"))
+        labels.addWidget(self._label(profile.get("self_rating", self.tr("setup_unset")), "cardDetail", True))
         level_row.addLayout(labels)
         level_row.addStretch()
         level_row.addWidget(ModuleIcon("assessment", self.theme, size=34))
@@ -418,7 +457,7 @@ class MainWindow(QMainWindow):
             metric = QVBoxLayout()
             metric.setSpacing(1)
             metric.addWidget(self._label(f"{value:,}", "homeMetric"))
-            metric.addWidget(self._label(self.tr(key), "eyebrow"))
+            metric.addWidget(self._label(self.tr(key), "eyebrow", True))
             metrics.addLayout(metric)
         summary.addLayout(metrics)
         active_assessment = snapshot.get("active_assessment")
@@ -455,7 +494,7 @@ class MainWindow(QMainWindow):
             title = definitions.get(level, {}).get("title", "")
             label = f"L{level}  {title}".strip()
             if available and level not in available:
-                label += "  ·  暂无本级内容"
+                label += "  ·  No content at this level"
             combo.addItem(label, level)
 
     def _recommended_level(self, rating):
@@ -599,10 +638,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(label)
         layout.addSpacing(10)
         for index, option in enumerate(question.get("options", [])):
-            button = self._button(f"{index + 1}   {option.get('text', '')}", lambda option_id=option["id"]: self._answer_assessment(option_id, onboarding))
-            button.setObjectName("answer")
-            button.setProperty("optionId", option["id"])
-            button.setAccessibleName(f"答案 {index + 1} {option.get('text', '')}")
+            button = self._answer_button(index, option, lambda option_id=option["id"]: self._answer_assessment(option_id, onboarding))
             self.answer_buttons.append(button)
             layout.addWidget(button)
         self.unknown_button = self._button(self.tr("dont_know"), lambda: self._answer_assessment(None, onboarding))
@@ -645,7 +681,7 @@ class MainWindow(QMainWindow):
         if result.get("summary"):
             layout.addWidget(self._label(result["summary"], None, True))
         if result.get("confidence"):
-            layout.addWidget(self._label(self.tr("assessment_confidence") + "：" + str(result["confidence"]), "muted", True))
+            layout.addWidget(self._label(self.tr("assessment_confidence") + ": " + str(result["confidence"]), "muted", True))
         layout.addWidget(self._label(self.tr("assessment_result_note"), "muted", True))
         if not onboarding:
             layout.addWidget(self._label(self.tr("assessment_retake_note"), "muted", True))
@@ -816,7 +852,7 @@ class MainWindow(QMainWindow):
         next_button.setStyleSheet(f"background: {self.theme['blue_dark']}; color: white; border-color: {self.theme['blue_dark']};")
         next_button.setDefault(True)
         layout.addWidget(next_button, 0, Qt.AlignmentFlag.AlignRight)
-        self.body_layout.addWidget(self._label("仅展示内容包收录的常用义项。", "muted"))
+        self.body_layout.addWidget(self._label("Only common meanings included in this content pack are shown.", "muted"))
         QTimer.singleShot(0, lambda w=word: self._speak_word(w) if self.page == "learning" else None)
 
     def _speech_status(self):
@@ -845,7 +881,7 @@ class MainWindow(QMainWindow):
         number = session.get("quiz_index", 0) + 1
         count = len(session.get("quiz_ids", []))
         round_no = session.get("round_no", 1)
-        self._page_heading(self.tr("quiz_title"), f"第 {round_no} 次测验  ·  {number} / {count}", notebook=True)
+        self._page_heading(self.tr("quiz_title"), f"Quiz {round_no}  ·  {number} / {count}", notebook=True)
         card, layout = self._card(parent_layout=self.body_layout)
         layout.setContentsMargins(35, 30, 35, 30)
         word = self._label(question.get("lemma", ""), "word")
@@ -859,10 +895,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(hint)
         layout.addSpacing(10)
         for index, option in enumerate(question.get("options", [])):
-            button = self._button(f"{index + 1}   {option.get('text', '')}", lambda option_id=option["id"]: self._answer(option_id))
-            button.setObjectName("answer")
-            button.setProperty("optionId", option["id"])
-            button.setAccessibleName(f"答案 {index + 1} {option.get('text', '')}")
+            button = self._answer_button(index, option, lambda option_id=option["id"]: self._answer(option_id))
             self.answer_buttons.append(button)
             layout.addWidget(button)
         self.unknown_button = self._button(self.tr("dont_know"), lambda: self._answer(None))
@@ -895,14 +928,14 @@ class MainWindow(QMainWindow):
     def _round_result(self):
         session = self.current_session
         wrong = session.get("wrong_ids", [])
-        self._page_heading(self.tr("round_result_title"), f"还有 {len(wrong)} 个词需要重学" if wrong else self.tr("all_correct"), notebook=True)
+        self._page_heading(self.tr("round_result_title"), f"{len(wrong)} words to review" if wrong else self.tr("all_correct"), notebook=True)
         card, layout = self._card(parent_layout=self.body_layout)
         results = session.get("round_results", [])
         word_map = {word["id"]: word for word in session.get("words", [])}
         table = self._make_table([self.tr("table_word"), self.tr("table_result"), self.tr("table_answer"), self.tr("table_correct_answer")], len(results))
         for row, result in enumerate(results):
             correct = result.get("correct", False)
-            unknown = result.get("kind") in ("unknown", "dont_know") or result.get("choice_text") in (None, "我不会")
+            unknown = result.get("kind") in ("unknown", "dont_know") or result.get("choice_text") in (None, "\u6211\u4e0d\u4f1a", self.tr("dont_know"))
             status = self.tr("status_correct") if correct else self.tr("status_unknown" if unknown else "status_wrong")
             values = [word_map.get(result.get("word_id"), {}).get("lemma", ""), status,
                       result.get("choice_text") or self.tr("dont_know"), result.get("answer_text", "")]
@@ -912,7 +945,7 @@ class MainWindow(QMainWindow):
                     item.setForeground(QColor(self.theme["success" if correct else "error"]))
                 table.setItem(row, col, item)
         layout.addWidget(table)
-        button_text = f"{self.tr('relearn_mistakes')}（{len(wrong)}）" if wrong else self.tr("finish_session")
+        button_text = f"{self.tr('relearn_mistakes')} ({len(wrong)})" if wrong else self.tr("finish_session")
         layout.addWidget(self._button(button_text, lambda: self._session_action(self.service.continue_session), primary=True), 0, Qt.AlignmentFlag.AlignRight)
 
     def _complete(self):
@@ -931,7 +964,7 @@ class MainWindow(QMainWindow):
         layout.addLayout(row)
         unknown_count = result.get("unknown_count", 0)
         wrong_count = max(0, result.get("error_count", 0) - unknown_count)
-        layout.addWidget(self._label(f"本轮答错 {wrong_count} 次  ·  不会 {unknown_count} 次  ·  重试 {result.get('retry_count', 0)} 次", "muted"))
+        layout.addWidget(self._label(f"{wrong_count} incorrect  ·  {unknown_count} unknown  ·  {result.get('retry_count', 0)} retries", "muted"))
         if session.get("review_of"):
             layout.addWidget(self._label(self.tr("history_review_hint"), "muted", True))
         controls = QHBoxLayout()
@@ -979,7 +1012,7 @@ class MainWindow(QMainWindow):
                 table.setItem(row, col, QTableWidgetItem(str(value)))
         table.cellDoubleClicked.connect(lambda row, col: self._mistake_detail(mistakes[row]))
         layout.addWidget(table)
-        layout.addWidget(self._label("双击词条可查看释义、发音和累计作答次数。", "muted"))
+        layout.addWidget(self._label("Double-click a word to see its definitions, pronunciation and total attempts.", "muted"))
 
     def _mistake_detail(self, item):
         word = item.get("word", item)
@@ -991,7 +1024,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self._label(word.get("lemma", ""), "word"))
         layout.addWidget(self._label(word.get("phonetic") or self.tr("phonetic_missing"), "phonetic"))
         layout.addWidget(self._label(meanings(word), "meaning", True))
-        layout.addWidget(self._label(f"作答 {item.get('answer_count', 0)} 次  ·  答错 {item.get('error_count', 0)} 次  ·  不会 {item.get('unknown_count', 0)} 次  ·  重试 {item.get('retry_count', 0)} 次", "muted", True))
+        layout.addWidget(self._label(f"{item.get('answer_count', 0)} attempts  ·  {item.get('error_count', 0)} incorrect  ·  {item.get('unknown_count', 0)} unknown  ·  {item.get('retry_count', 0)} retries", "muted", True))
         layout.addStretch()
         controls = QHBoxLayout()
         controls.addWidget(self._button(self.tr("pronounce"), lambda: self._speak_word(word)))
@@ -1018,15 +1051,15 @@ class MainWindow(QMainWindow):
             card, layout = self._card(parent_layout=self.body_layout)
             top = QHBoxLayout()
             title = date_text(session.get("completed_at") or session.get("created_at"))
-            top.addWidget(self._label(f"{title}  ·  {len(session.get('words', []))} 词", "sectionTitle"))
+            top.addWidget(self._label(f"{title}  ·  {len(session.get('words', []))} words", "sectionTitle"))
             top.addStretch()
             if session.get("review_of"):
-                top.addWidget(self._label("重新挑战", "pinkTag"))
+                top.addWidget(self._label("Try again", "pinkTag"))
             layout.addLayout(top)
             layout.addWidget(self._label(" · ".join(word.get("lemma", "") for word in session.get("words", [])[:10]), "muted", True))
             result = session.get("result", {})
             row = QHBoxLayout()
-            row.addWidget(self._label(f"新学 {result.get('net_new_words', 0)} 词  ·  重试 {result.get('retry_count', 0)} 次", "muted"))
+            row.addWidget(self._label(f"{result.get('net_new_words', 0)} new words  ·  {result.get('retry_count', 0)} retries", "muted"))
             row.addStretch()
             row.addWidget(self._button(self.tr("history_details"), lambda s=session: self._history_details(s)))
             row.addWidget(self._button(self.tr("history_review"), lambda s=session: self._review(s), quiet=True))
@@ -1038,7 +1071,7 @@ class MainWindow(QMainWindow):
         dialog.resize(840, 680)
         layout = QVBoxLayout(dialog)
         layout.setContentsMargins(22, 22, 22, 22)
-        layout.addWidget(self._label(f"{date_text(session.get('completed_at'))}  ·  {len(session.get('words', []))} 词", "sectionTitle"))
+        layout.addWidget(self._label(f"{date_text(session.get('completed_at'))}  ·  {len(session.get('words', []))} words", "sectionTitle"))
         tabs = QTabWidget()
         stats = session.get("word_stats", {})
         words = session.get("words", [])
@@ -1049,9 +1082,9 @@ class MainWindow(QMainWindow):
             values = [word.get("lemma", ""), meanings(word), stat.get("answer_count", 0), stat.get("error_count", 0), stat.get("unknown_count", 0), stat.get("retry_count", 0)]
             for col, value in enumerate(values):
                 word_table.setItem(row, col, QTableWidgetItem(str(value)))
-        tabs.addTab(word_table, "词条记录")
+        tabs.addTab(word_table, "Word records")
         attempts = session.get("attempts", [])
-        answers = self._make_table(["单词", "测验轮次", "你的答案", "正确含义", "结果"], len(attempts))
+        answers = self._make_table(["Word", "Quiz round", "Your answer", "Correct meaning", "Result"], len(attempts))
         word_map = {word["id"]: word for word in words}
         for row, attempt in enumerate(attempts):
             values = [word_map.get(attempt.get("word_id"), {}).get("lemma", ""), attempt.get("round_no", ""),
@@ -1059,14 +1092,14 @@ class MainWindow(QMainWindow):
                       self.tr("status_correct" if attempt.get("correct") else "status_unknown" if attempt.get("kind") == "unknown" else "status_wrong")]
             for col, value in enumerate(values):
                 answers.setItem(row, col, QTableWidgetItem(str(value)))
-        tabs.addTab(answers, "作答记录")
+        tabs.addTab(answers, "Answer records")
         layout.addWidget(tabs, 1)
         layout.addWidget(self._button(self.tr("close"), dialog.accept), 0, Qt.AlignmentFlag.AlignRight)
         dialog.exec()
 
     def _review(self, session):
         if self.service.snapshot().get("active_session"):
-            self._notice("请先完成当前一轮，或继续当前学习。")
+            self._notice("Finish or continue your current session first.")
             self.show_page("learning")
             return
         self._run(lambda: self.service.start_session(review_of=session["id"]), self._session_updated)
@@ -1074,7 +1107,7 @@ class MainWindow(QMainWindow):
     def _achievements_page(self):
         self._page_heading(self.tr("achievements_title"), self.tr("achievements_hint"))
         count = self.current_data.get("stats", {}).get("achievement_practice_words", 0)
-        self.body_layout.addWidget(self._label(f"计入成就的练习量：{count} 词次", "muted"))
+        self.body_layout.addWidget(self._label(f"Words practiced toward achievements: {count}", "muted"))
         grid = QGridLayout()
         grid.setSpacing(18)
         for index, achievement in enumerate(self.service.achievements()):
@@ -1164,8 +1197,8 @@ class MainWindow(QMainWindow):
         layout.addWidget(self._button(self.tr("edit_texts"), self._edit_texts), 0, Qt.AlignmentFlag.AlignLeft)
         card, layout = self._card(self.tr("content_section"), self.body_layout)
         content = snapshot.get("content", {})
-        layout.addWidget(self._label(f"版本：{content.get('version', '')}  ·  独立词条：{content.get('word_count', 0)}", None, True))
-        layout.addWidget(self._label("界面语言：简体中文  ·  释义语言：中文  ·  学习语言：英语", "muted", True))
+        layout.addWidget(self._label(f"Version: {content.get('version', '')}  ·  Unique words: {content.get('word_count', 0)}", None, True))
+        layout.addWidget(self._label("Interface: English  ·  Definitions: English  ·  Learning: English", "muted", True))
 
     def _save_profile(self):
         self._run(lambda: self.service.update_profile(name=self.name_edit.text().strip(), self_rating=self.rating_combo.currentText(), difficulty=self.level_combo.currentData()), lambda _: self._notice(self.tr("profile_saved")))
@@ -1250,7 +1283,7 @@ class MainWindow(QMainWindow):
             missing = goal.get("missing_words", goal.get("remaining_words", []))
             if isinstance(missing, list) and missing:
                 names = [word.get("lemma", word.get("id", "")) if isinstance(word, dict) else str(word) for word in missing]
-                layout.addWidget(self._label(self.tr("remaining_words") + "：" + " · ".join(names), "muted", True))
+                layout.addWidget(self._label(self.tr("remaining_words") + ": " + " · ".join(names), "muted", True))
         self._goal_form()
 
     def _goal_details(self):
@@ -1321,12 +1354,14 @@ class MainWindow(QMainWindow):
         self.show_page("queue")
 
     def _export(self):
-        path, _ = QFileDialog.getSaveFileName(self, self.tr("export_data"), "vocabulary-records.json", "JSON (*.json)")
+        path, _ = QFileDialog.getSaveFileName(self, self.tr("export_data"), "vocabulary-records.json", "JSON (*.json)",
+                                            options=QFileDialog.Option.DontUseNativeDialog)
         if path:
             self._run(lambda: self.service.export_data(path), lambda _: self._notice(self.tr("export_success")))
 
     def _import(self):
-        path, _ = QFileDialog.getOpenFileName(self, self.tr("import_data"), "", "JSON (*.json)")
+        path, _ = QFileDialog.getOpenFileName(self, self.tr("import_data"), "", "JSON (*.json)",
+                                            options=QFileDialog.Option.DontUseNativeDialog)
         if not path:
             return
         answer = QMessageBox.question(self, self.tr("import_confirm_title"), self.tr("import_confirm"), QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
@@ -1359,9 +1394,9 @@ class MainWindow(QMainWindow):
             try:
                 custom = json.loads(editor.toPlainText())
                 if not isinstance(custom, dict) or not all(isinstance(k, str) and isinstance(v, str) and len(v) <= 5000 for k, v in custom.items()):
-                    raise ValueError("文案必须是键名对应文字的 JSON 对象，每条不超过 5000 字。")
+                    raise ValueError("Interface text must be a JSON object mapping keys to strings of at most 5,000 characters each.")
                 if not custom.get("app_title", "").strip():
-                    raise ValueError("应用名称不能为空。")
+                    raise ValueError("The application name cannot be empty.")
                 self.text_path.parent.mkdir(parents=True, exist_ok=True)
                 temp_path = self.text_path.with_suffix(".json.tmp")
                 temp_path.write_text(json.dumps(custom, ensure_ascii=False, indent=2), encoding="utf-8")

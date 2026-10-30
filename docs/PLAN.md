@@ -1,48 +1,48 @@
-# 实施计划与验收
+# Implementation plan and acceptance
 
-## 已确认
+## Confirmed decisions
 
-- Windows 桌面应用；Python 为主，PySide6 界面，SQLite 保存。首版不需要 Java。
-- 核心学习离线运行。在线策略与 AI 开关独立，阶段 1 不接入 AI。
-- 每轮 20 个不同词条，全部最终答对才结算。原本已会标记可改，随会话保存，完成时才登记。
-- 一轮中 5 词原本会、15 词新学会：净新增 15，已掌握集合登记全部 20 词。曾错词继续保留错误记录。
-- 普通词数目标按新增区间展示：起点 1000、目标 5000，主条从 0% 开始。另显示当前估计词量，估计不等于逐词掌握记录。
-- 四级按指定完整版本目标词库覆盖率 100% 完成。缺正式词表时显示待安装；测试词集单独标注。
-- 成就按完成的练习词次累计，主动重做历史轮不累计成就；首次开始学习单独记录。
-- 主页可选择本地美音或英音，不朗读中文。
-- 文案、主题和内容资源集中配置，允许后续编辑；公开部署由项目所有者决定。
-- 首页是模块入口。进入模块后使用独立界面，通过“返回主页”切换，学习中不显示设置或其他模块导航。
-- 首次启动独立引导：快速自评后设目标，或自选 20/50/100/200/500 题测评后设目标。所有题量使用不同的真实词条，支持保存续做。
-- L1—L15 均提供实际内容；L1 为基础交流与日常词，逐步增加难度，L15 为标明领域的高难专业术语。等级依据可修改，不宣称标准化认证。
-- 重新测评可显式采用推荐的学习难度，不自动重设原目标、估计基线、历史或成就。
+- A Windows desktop app using Python, PySide6, and SQLite. The initial release does not need Java.
+- Core learning works offline. Network policy and the AI switch are separate. Phase 1 has no AI integration.
+- Each session has 20 distinct entries and completes only when all have eventually been answered correctly. "Already knew" markers can be changed and are saved with the session; mastery is registered only on completion.
+- A session with 5 previously known words and 15 newly learned words adds 15 net new words and registers all 20 as mastered. Previously missed words keep their error records.
+- Ordinary word count goals show the gained interval: a baseline of 1,000 and target of 5,000 starts the main bar at 0%. Estimated vocabulary is shown separately from individually recorded mastery.
+- CET-4 completion requires 100% coverage of a specified complete, versioned target list. A missing official list is shown as pending installation; sample sets are labeled separately.
+- Achievements accumulate completed word practices. Deliberately replaying historical sessions does not advance practice achievements. The first start of learning is recorded separately.
+- Local American or British English pronunciation can be selected. Pronunciation reads the English word.
+- Interface text, themes, and content resources have centralized configuration and remain editable. The project owner decides whether to deploy publicly.
+- The home page is the module entry point. Each module uses a separate scene with "Back to home". Settings and other module navigation are absent during learning.
+- First launch uses separate onboarding: a quick self-rating followed by a goal, or a choice of 20/50/100/200/500 assessment questions followed by a goal. Every size uses distinct real entries and supports saving and resuming.
+- L1–L15 all contain real content. L1 covers basic communication and everyday words, with increasing difficulty through L15 specialist terms labeled by field. Level criteria can change and do not claim standardized certification.
+- A reassessment can explicitly update the recommended learning difficulty without automatically resetting goals, estimated baselines, history, or achievements.
+- The interface, prompts, and vocabulary definitions are in English.
 
-## 阶段 0
+## Phase 0
 
-1. 保存完整产品要求和路线图。
-2. 固定业务规则、数据关系、技术版本与当前范围。
-3. 把当前待验证事项与下一阶段问题分开记录。
+1. Save the complete product requirements and roadmap.
+2. Fix business rules, data relationships, technical versions, and the current scope.
+3. Record current verification tasks separately from questions for later phases.
 
-## 阶段 1
+## Phase 1
 
-1. 建立业务层、SQLite 存储与独立内容包。
-2. 实现总览、逐词学习、四选一、不会、错词重学重测、全对结算。
-3. 接入本地语音；每一步保存，退出恢复，结算幂等。
-4. 实现主页、错题本、历史、成就、设置、待学队列与导入导出。
-5. 完成目标条、两类目标、减少动画与基础庆祝。
-6. 运行规则测试、真实界面操作和 Windows 应用包验证，记录限制。
-7. 按补充要求完成独立模块导航、首次引导、全部五种题量和 15 级内容；逐项核对见 REQUIREMENTS_CHECKLIST.md。
+1. Build the business layer, SQLite storage, and separate content packs.
+2. Implement the overview, word-by-word learning, four-choice questions, "I don't know", relearning and retesting missed words, and all-correct completion.
+3. Integrate local speech. Save every step, restore after exit, and make completion idempotent.
+4. Implement home, mistakes, history, achievements, settings, the study queue, and import/export.
+5. Complete the goal bar, both goal types, reduced motion, and basic celebrations.
+6. Run rule tests, real interface operations, and Windows bundle verification; record limitations.
+7. Complete separate module navigation, first-use onboarding, all five assessment sizes, and 15 content levels. See REQUIREMENTS_CHECKLIST.md for individual checks.
 
-## 验收重点
+## Acceptance priorities
 
-- 离线完成 20 词；只剩一个错词时仍有四个有效选项和“我不会”。
-- 中途退出不结算，重启可以续做；实际题目、选项、词表快照保留。
-- 5 已会 + 15 新词、重复提交、历史重做、重启后错题与重试数正确。
-- 目标外词不推进词集覆盖；差一词、空词集、不完整词表不提前完成。
-- 导入校验与备份，内容升级不改旧会话，凭据不进入导出。
-- 彩带有重力、边缘碰撞、淡出，动画不拦操作，减少动画有效。
-- Windows 包含运行时和核心资源。当前机器验证与无开发环境机器验证分别记录。
+- Complete 20 words offline. Four valid options and "I don't know" remain even when only one missed word needs retesting.
+- Exiting midway does not complete a session. Restart restores actual questions, options, and word snapshots.
+- Verify 5 known + 15 new words, repeated completion, historical replays, and mistake/retry counts after restart.
+- Words outside a target set do not advance coverage. A missing final word, empty set, or incomplete list cannot trigger early completion.
+- Validate imports and backups. Content upgrades do not alter old sessions. Credentials cannot enter exports.
+- Confetti has gravity, edge collisions, and fading. Animations do not block interaction, and reduced motion works.
+- The Windows bundle includes runtimes and core resources. Record checks on the current machine separately from checks on a machine without a development environment.
 
-## 当前边界
+## Current boundaries
 
-当前词库用于学习和内部词义识别测评，不是完整四级词库。20—500 题提供不同体量的未标准化测评；题量增加不保证结果一定准确。15 级均有实际内容，具体数量和来源见 CONTENT.md。3D、阅读、写作、阶段奖励和真实 AI 调用继续保留在后续路线图。
-
+The catalog supports learning and internal meaning recognition assessments; it is not a complete CET-4 list. Assessments of 20–500 questions provide different amounts of unstandardized evidence. More questions do not guarantee accuracy. All 15 levels have real content; see CONTENT.md for counts and sources. 3D, reading, writing, milestone rewards, and actual AI requests remain on the roadmap.

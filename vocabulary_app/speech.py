@@ -12,7 +12,7 @@ class LocalSpeech(QObject):
     def __init__(self, parent: QObject | None = None):
         super().__init__(parent)
         self.available = False
-        self._message = "未安装可用的本地英语语音，可继续文字学习。"
+        self._message = "No usable local English voice is installed. You can continue studying with text."
         self._engine: QTextToSpeech | None = None
         self._language = "en-US"
         self._voices = {}
@@ -25,7 +25,7 @@ class LocalSpeech(QObject):
             self._engine.setRate(-0.15)
             self._refresh_voices()
         except (RuntimeError, ValueError) as error:
-            self._message = f"本地语音不可用：{error}"
+            self._message = f"Local speech is unavailable: {error}"
 
     def _refresh_voices(self):
         if self._engine is None:
@@ -42,14 +42,14 @@ class LocalSpeech(QObject):
     def select_language(self, language: str):
         self._language = language if language in ("en-US", "en-GB") else "en-US"
         self.available = self._language in self._voices
-        accent = "美式" if self._language == "en-US" else "英式"
+        accent = "American" if self._language == "en-US" else "British"
         if self.available and self._engine is not None:
             self._engine.stop()
             self._engine.setLocale(QLocale(self._language))
             self._engine.setVoice(self._voices[self._language])
-            self._message = f"本地{accent}英语 · {self._voices[self._language].name()}"
+            self._message = f"Local {accent} English · {self._voices[self._language].name()}"
         else:
-            self._message = f"未安装本地{accent}英语语音。请在 Windows 语音设置安装对应语言的语音组件，可继续文字学习。"
+            self._message = f"No local {accent} English voice is installed. Install the matching voice component in Windows speech settings. You can continue studying with text."
         self.stateChanged.emit(self._message)
 
     def status(self) -> str:
@@ -74,6 +74,6 @@ class LocalSpeech(QObject):
             self.stateChanged.emit(self._message)
 
     def _on_error(self, reason, message: str):
-        self._message = f"本地语音暂不可用：{message}"
+        self._message = f"Local speech is temporarily unavailable: {message}"
         self.stateChanged.emit(self._message)
 

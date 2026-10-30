@@ -1,27 +1,28 @@
-# 本轮需求核对
+# Requirements checklist
 
-本轮补齐原先阶段 0、1 的缺漏，并按补充要求加入首次测评和完整 15 级内容。阅读、写作、真实 AI、3D 展示柜等后续模块继续保留，不提前冒充已完成。
+This iteration fills earlier gaps in phases 0 and 1 and adds first-use assessment and complete 15-level content. Reading, writing, actual AI, and a 3D achievement cabinet remain planned for later modules and are not presented as complete.
 
-| 原需求/补充要求 | 对应实现与验收 |
+| Original or additional requirement | Implementation and acceptance |
 |---|---|
-| Windows、本地离线、可双击运行 | Python/PySide6/SQLite，Windows 应用包包含运行时；新机器与物理断网验证状态单独记录 |
-| 白底黑字、蓝粉强调、可持续修改 | 集中主题与文案配置；软件内可编辑文字，不复制第三方品牌与宣传素材 |
-| 主页进入各模块，模块独立 | 首页入口卡片；移除左侧导航；模块只显示自身内容与返回主页；目标条仅在主页 |
-| 首次询问水平 | 独立引导，保留八个自评选项；快速开始与不确定测评两条路径 |
-| 自选 20/50/100/200/500 题 | 五种实际题量；保存题目和作答；不以复制词条或重复题目凑数 |
-| 类似二分定位、避免一错大幅跳级 | 跨难度锚点后集中选题，结合多题证据和猜测概率；保留算法版本及估计不确定性 |
-| L1—L15 逐级内容 | L1 基础交流，L15 分领域专业术语；结合频率、抽象性和专业性，内容版本与分档可调整 |
-| 多能力变量和重新分配 | 词义识别证据单独保存，其余未测技能未知；可重新测评并明确采用推荐难度 |
-| 首次设目标后再进入主页 | 自评或完整测评之后进入独立目标步骤，保存成功才完成引导 |
-| 普通词数与四级目标 | 新增区间主比例；精确已掌握集合独立；正式四级词表未安装则待安装，完整非空词集100%才达成 |
-| 完整 20 词循环 | 总览、原本会、逐词释义/词性/音标/本地发音、四选一/不会、错词重学重测、全对结算 |
-| 原20词池干扰项与多义词 | 重测仍使用原池；排除目标其他正确义项、重复释义和已标注同义组 |
-| 错词仍算进度并保留记录 | 结算登记所有有效词；错题、不会、作答与重试数单独保留 |
-| 退出恢复、防重复结算 | 每步保存，稳定会话与题目快照，事务与唯一完成事件；测试重启和重复完成 |
-| 历史、主动重做、成就 | 历史保留原内容；重做新记录且不增加唯一词数或练习成就；首次使用与各练习档独立 |
-| 彩带和飞入错题本效果 | 重力、碰撞、淡出、不拦输入、减少动画；学习页保留收录指示，回主页后进入错题模块 |
-| 数据可维护与备份 | 导入导出、校验、备份与兼容旧档案；内容升级不改旧学习快照或目标分母 |
-| 网络与 AI 独立 | 保存三种网络策略；当前核心离线运行，AI 未接入不可调用，无开发者额度回退 |
-| 网站和其他语言扩展 | 业务、内容、存储和界面分离，语言字段独立；当前不公开部署 |
+| Windows, local offline use, double-click launch | Python/PySide6/SQLite; Windows bundle includes runtimes. Clean-machine and physical-disconnection verification are recorded separately. |
+| White background, black text, blue/pink emphasis, continued editing | Centralized theme and text configuration; in-app text editing; no copied third-party branding or promotional assets. |
+| Home opens independent modules | Home entry cards; removed sidebar; each module shows its own content and "Back to home". Goal bar appears only at home. |
+| Ask for level on first use | Separate onboarding with eight self-ratings and quick-start or assessment paths. |
+| Select 20/50/100/200/500 questions | Five actual sizes; questions and answers saved; entries or questions are not copied to fill a quota. |
+| Narrow difficulty similarly to binary search without a large jump after one error | Initial difficulty anchors followed by focused selection; combine evidence from multiple answers and guessing probability; save algorithm version and estimation uncertainty. |
+| Progressive L1–L15 content | L1 basic communication, L15 specialist terms by field; frequency, abstraction, and specialization inform editable content versions and levels. |
+| Multiple skill variables and reassignment | Meaning recognition evidence is saved separately. Untested skills remain unknown. Reassess and explicitly adopt the recommended difficulty. |
+| Set a first goal before entering home | Self-rating or completed assessment leads to a separate goal step. Onboarding completes only after a successful save. |
+| Ordinary vocabulary and CET-4 goals | Main ratio uses the gained interval. Exact mastered words remain separate. An absent official CET-4 list is pending installation; only a complete, nonempty set at 100% can complete. |
+| Complete 20-word cycle | Overview, already-known markers, individual definitions/POS/phonetics/local speech, four choices/unknown, relearning and retesting, all-correct completion. |
+| Original 20-word distractor pool and multiple senses | Retests keep the original pool and exclude other correct target senses, duplicate definitions, and marked synonym groups. |
+| Missed words still count toward progress and retain records | Completion registers all valid words; mistakes, unknown responses, answers, and retries remain separate. |
+| Restore after exit; prevent duplicate accounting | Save each step, stable session and question snapshots, transactions, and unique completion events; test restart and repeated completion. |
+| History, deliberate replay, achievements | History retains original content. Replay creates a new record without unique-word or practice-achievement gains. First use and practice milestones remain separate. |
+| Confetti and flight to mistake collection | Gravity, collisions, fading, no blocked input, reduced motion; collection indicator stays in learning, with the mistake module accessed after returning home. |
+| Maintainable data and backups | Import/export, validation, backup, and compatible legacy profiles; content upgrades do not change historical study snapshots or goal denominators. |
+| Separate network policy and AI | Save three network policies; core learning is currently offline; AI is not integrated or callable, with no developer-quota fallback. |
+| Web and additional languages | Separate business rules, content, storage, and interface, with independent language fields. No current public deployment. |
+| English information throughout | English interface text, prompts, definitions, configuration descriptions, and documentation. |
 
-实际运行结果、通过的检查数和仍待验证的环境条件见 VALIDATION.md。内容数量、上游固定版本、许可证和等级依据见 CONTENT.md。
+See VALIDATION.md for actual results, passed checks, and environments still awaiting verification. See CONTENT.md for content counts, the pinned upstream revision, licenses, and level criteria.

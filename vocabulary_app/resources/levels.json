@@ -4,179 +4,179 @@
   "levels": [
     {
       "level": 1,
-      "title": "起步",
+      "title": "Getting started",
       "estimated_range": [
         0,
         250
       ],
-      "description": "问候、日常交流及具体事物；项目内初始档位，未标准化校准。",
+      "description": "Greetings, everyday communication, and concrete things. This is an initial internal band and has not been standardized.",
       "seed_available": true,
       "content_word_count": 90
     },
     {
       "level": 2,
-      "title": "生活基础",
+      "title": "Everyday basics",
       "estimated_range": [
         250,
         500
       ],
-      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "description": "Internal recommendation bands based on word frequency and abstraction. Subject area and personal background affect actual difficulty. These bands have not been standardized.",
       "seed_available": true,
       "content_word_count": 90,
       "frequency_rank_max": 1000
     },
     {
       "level": 3,
-      "title": "基础表达",
+      "title": "Basic expression",
       "estimated_range": [
         500,
         900
       ],
-      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "description": "Internal recommendation bands based on word frequency and abstraction. Subject area and personal background affect actual difficulty. These bands have not been standardized.",
       "seed_available": true,
       "content_word_count": 90,
       "frequency_rank_max": 1700
     },
     {
       "level": 4,
-      "title": "日常拓展",
+      "title": "Everyday expansion",
       "estimated_range": [
         900,
         1500
       ],
-      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "description": "Internal recommendation bands based on word frequency and abstraction. Subject area and personal background affect actual difficulty. These bands have not been standardized.",
       "seed_available": true,
       "content_word_count": 90,
       "frequency_rank_max": 2600
     },
     {
       "level": 5,
-      "title": "一般表达",
+      "title": "General expression",
       "estimated_range": [
         1500,
         2300
       ],
-      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "description": "Internal recommendation bands based on word frequency and abstraction. Subject area and personal background affect actual difficulty. These bands have not been standardized.",
       "seed_available": true,
       "content_word_count": 90,
       "frequency_rank_max": 3800
     },
     {
       "level": 6,
-      "title": "表达拓展",
+      "title": "Broader expression",
       "estimated_range": [
         2300,
         3200
       ],
-      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "description": "Internal recommendation bands based on word frequency and abstraction. Subject area and personal background affect actual difficulty. These bands have not been standardized.",
       "seed_available": true,
       "content_word_count": 90,
       "frequency_rank_max": 5400
     },
     {
       "level": 7,
-      "title": "进阶一",
+      "title": "Intermediate I",
       "estimated_range": [
         3200,
         4200
       ],
-      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "description": "Internal recommendation bands based on word frequency and abstraction. Subject area and personal background affect actual difficulty. These bands have not been standardized.",
       "seed_available": true,
       "content_word_count": 60,
       "frequency_rank_max": 7500
     },
     {
       "level": 8,
-      "title": "进阶二",
+      "title": "Intermediate II",
       "estimated_range": [
         4200,
         5500
       ],
-      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "description": "Internal recommendation bands based on word frequency and abstraction. Subject area and personal background affect actual difficulty. These bands have not been standardized.",
       "seed_available": true,
       "content_word_count": 60,
       "frequency_rank_max": 10000
     },
     {
       "level": 9,
-      "title": "进阶三",
+      "title": "Intermediate III",
       "estimated_range": [
         5500,
         7000
       ],
-      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "description": "Internal recommendation bands based on word frequency and abstraction. Subject area and personal background affect actual difficulty. These bands have not been standardized.",
       "seed_available": true,
       "content_word_count": 60,
       "frequency_rank_max": 14000
     },
     {
       "level": 10,
-      "title": "拓展一",
+      "title": "Extended I",
       "estimated_range": [
         7000,
         8500
       ],
-      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "description": "Internal recommendation bands based on word frequency and abstraction. Subject area and personal background affect actual difficulty. These bands have not been standardized.",
       "seed_available": true,
       "content_word_count": 60,
       "frequency_rank_max": 20000
     },
     {
       "level": 11,
-      "title": "拓展二",
+      "title": "Extended II",
       "estimated_range": [
         8500,
         10500
       ],
-      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "description": "Internal recommendation bands based on word frequency and abstraction. Subject area and personal background affect actual difficulty. These bands have not been standardized.",
       "seed_available": true,
       "content_word_count": 60,
       "frequency_rank_max": 28000
     },
     {
       "level": 12,
-      "title": "拓展三",
+      "title": "Extended III",
       "estimated_range": [
         10500,
         13000
       ],
-      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "description": "Internal recommendation bands based on word frequency and abstraction. Subject area and personal background affect actual difficulty. These bands have not been standardized.",
       "seed_available": true,
       "content_word_count": 60,
       "frequency_rank_max": 36000
     },
     {
       "level": 13,
-      "title": "深入一",
+      "title": "Advanced I",
       "estimated_range": [
         13000,
         16000
       ],
-      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "description": "Internal recommendation bands based on word frequency and abstraction. Subject area and personal background affect actual difficulty. These bands have not been standardized.",
       "seed_available": true,
       "content_word_count": 60,
       "frequency_rank_max": 44000
     },
     {
       "level": 14,
-      "title": "深入二",
+      "title": "Advanced II",
       "estimated_range": [
         16000,
         20000
       ],
-      "description": "结合词频与抽象性划分的项目内推荐档；领域与个人背景会影响实际难度，未标准化校准。",
+      "description": "Internal recommendation bands based on word frequency and abstraction. Subject area and personal background affect actual difficulty. These bands have not been standardized.",
       "seed_available": true,
       "content_word_count": 60,
       "frequency_rank_max": null
     },
     {
       "level": 15,
-      "title": "专业术语",
+      "title": "Specialist terminology",
       "estimated_range": [
         20000,
         30000
       ],
-      "description": "跨医学、物理、化学、工程与数学的精选专业术语；并非全球最难词汇认证，未标准化校准。",
+      "description": "Selected specialist terms from medicine, physics, chemistry, engineering, and mathematics. This is not a certification of the hardest vocabulary and has not been standardized.",
       "seed_available": true,
       "content_word_count": 60
     }
@@ -184,52 +184,52 @@
   "self_ratings": [
     {
       "id": "beginner",
-      "label": "刚开始学",
+      "label": "Just starting",
       "level": 1,
-      "notes": "用户自评，仅作为初始内容推荐；其他未测技能保持未知。"
+      "notes": "User self-rating, used only for the initial content recommendation. Other untested skills remain unknown."
     },
     {
       "id": "a_little",
-      "label": "只会一点",
+      "label": "Know a little",
       "level": 2,
-      "notes": "用户自评，仅作为初始内容推荐；其他未测技能保持未知。"
+      "notes": "User self-rating, used only for the initial content recommendation. Other untested skills remain unknown."
     },
     {
       "id": "elementary",
-      "label": "初级",
+      "label": "Beginner",
       "level": 3,
-      "notes": "用户自评，仅作为初始内容推荐；其他未测技能保持未知。"
+      "notes": "User self-rating, used only for the initial content recommendation. Other untested skills remain unknown."
     },
     {
       "id": "intermediate",
-      "label": "中级",
+      "label": "Intermediate",
       "level": 5,
-      "notes": "用户自评，仅作为初始内容推荐；其他未测技能保持未知。"
+      "notes": "User self-rating, used only for the initial content recommendation. Other untested skills remain unknown."
     },
     {
       "id": "advanced",
-      "label": "高级",
+      "label": "Advanced",
       "level": 8,
-      "notes": "用户自评；只用于初始推荐，不能据此推断具体已会词或未测技能。"
+      "notes": "User self-rating, used only for the initial recommendation. It does not establish specific known words or untested skills."
     },
     {
       "id": "fluent",
-      "label": "熟练",
+      "label": "Proficient",
       "level": 11,
-      "notes": "用户自评；流利程度与词义识别、阅读、写作等能力分别记录。"
+      "notes": "User self-rating. Fluency, word-meaning recognition, reading, writing, and other skills are recorded separately."
     },
     {
       "id": "native",
-      "label": "本地人",
+      "label": "Native speaker",
       "level": 12,
-      "notes": "语言背景入口，临时推荐档位可调整；不代表所有英语技能均为最高级。"
+      "notes": "Language background. The provisional recommended band can be adjusted; it does not imply the highest level in every English skill."
     },
     {
       "id": "professional",
-      "label": "专业英语学习人",
+      "label": "Professional English learner",
       "level": 12,
-      "notes": "学习背景入口，临时推荐档位可调整；与本地人不是严格高低关系，未测技能保持未知。"
+      "notes": "Learning background. The provisional recommended band can be adjusted. This is not strictly ranked above or below Native speaker; untested skills remain unknown."
     }
   ],
-  "classification": "日常交流精选、词频与抽象性启发式、专业术语精选；未标准化校准"
+  "classification": "Selected everyday communication, word-frequency and abstraction heuristics, and specialist terminology; not standardized"
 }

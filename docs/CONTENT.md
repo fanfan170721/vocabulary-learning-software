@@ -1,111 +1,117 @@
-# 内容与配置
+# Content and configuration
 
-## 当前范围
+## Current scope
 
-`vocabulary_app/resources/content.json` 的 `content-0.2.0` 包含 **1080个不同英文词元、1274条义项**：原有180个项目基础词元完整保留，新增900个ECDICT词元。所有L1—L15均有实际内容。
+`vocabulary_app/resources/content.json`, version `content-0.2.1-en`, contains **1,080 distinct English lemmas and 1,274 senses**. It retains all 180 original project seed lemmas and adds 900 ECDICT lemmas. Every level from L1 through L15 contains actual content. The interface and bundled definitions are in English. English localization preserves the bundled words, sense IDs, levels, parts of speech, synonym groups, and source records.
 
-| 内部档位 | 词元数 | 内容方向 |
+| Internal level | Lemmas | Content direction |
 | --- | ---: | --- |
-| L1 | 90 | 问候、日常交流、具体事物 |
-| L2—L6 | 每级90 | 基础表达至一般抽象表达 |
-| L7—L14 | 每级60 | 按词频与抽象性启发式选取的进阶词 |
-| L15 | 60 | 医学、物理、化学、工程、数学专业术语 |
+| L1 | 90 | Greetings, everyday communication, concrete objects |
+| L2–L6 | 90 each | Basic expressions through general abstract expressions |
+| L7–L14 | 60 each | Advanced words selected using frequency and abstraction heuristics |
+| L15 | 60 | Specialist terminology in medicine, physics, chemistry, engineering, mathematics |
 
-L1新增了hi、hello、yes、no、please、thanks、goodbye、welcome等基础交流词。`how are you`是短句，未把它拼成一个“新单词”计数。原有bank、light、right等多义词仍按一个稳定词元计数。
+L1 adds basic communication words including hi, hello, yes, no, please, thanks, goodbye, and welcome. `how are you` is a phrase and is not counted as a newly assembled word. Existing multiple-sense words such as bank, light, and right still count as one stable lemma each.
 
-全库提供500个不同词元的实际题源，也足以完成多轮20词学习；这不代表已建立标准化的英语能力测验。每轮必须选择20个不同词元，候选不足时提示调整难度或扩充内容，不复制词条凑数量。
+The catalog supplies 500 distinct lemmas for actual assessment questions and enough content for multiple 20-word sessions. This does not establish a standardized English proficiency assessment. Every session must use 20 distinct lemmas. If there are insufficient candidates, report the need to adjust difficulty or expand content rather than duplicating entries.
 
-## 来源、固定版本与许可
+## Sources, pinned revision, and licenses
 
-原有180词的`project-original-seed`是内部内容许可标识，用于本地开发、学习和演示。正式公开分发前，由项目作者选择并记录对外内容许可；它不是MIT的别名。
+The original 180 words use `project-original-seed`, an internal content license identifier for local development, learning, and demos. Before public distribution, the project author must choose and record an external content license. This identifier is not an alias for MIT.
 
-新增词条来自[ECDICT官方仓库](https://github.com/skywind3000/ECDICT)，按该仓库固定版本所附MIT许可证使用。许可证全文保留在`vocabulary_app/resources/licenses/ECDICT-MIT.txt`，随应用资源分发。原文版权声明为`Copyright (c) 2025 Linwei`。项目内容与代码许可分别管理，新增ECDICT词条的许可不会改写原有180词的许可。
+The added entries come from the [official ECDICT repository](https://github.com/skywind3000/ECDICT) under the MIT license supplied with the pinned revision. The complete license is retained in `vocabulary_app/resources/licenses/ECDICT-MIT.txt` and distributed with app resources. Its copyright notice is `Copyright (c) 2025 Linwei`. Content and code licenses are managed separately. The ECDICT entries' license does not rewrite the license of the original 180 words.
 
-本次来源记录：
+Recorded source acquisition:
 
-- 获取日期：2026-10-24。
-- 固定提交：`ab22ad36302cafc6349a050e2b60894855208055`。
-- [完整CSV](https://raw.githubusercontent.com/skywind3000/ECDICT/ab22ad36302cafc6349a050e2b60894855208055/ecdict.csv)：770611行，66009548字节。
-- CSV SHA-256：`d1ecbdf9ee2b920afb6f430ca6b6bb9f559588cf0dff86e04bd255f9390843cc`。
-- [该提交的许可证](https://raw.githubusercontent.com/skywind3000/ECDICT/ab22ad36302cafc6349a050e2b60894855208055/LICENSE) SHA-256：`f8552dd246f61a4e064569eae6194a01c6b3d63b03bf27c6ca863593c549ed0f`。
+- Retrieval date: 2026-10-24.
+- Pinned commit: `ab22ad36302cafc6349a050e2b60894855208055`.
+- [Full CSV](https://raw.githubusercontent.com/skywind3000/ECDICT/ab22ad36302cafc6349a050e2b60894855208055/ecdict.csv): 770,611 rows, 66,009,548 bytes.
+- CSV SHA-256: `d1ecbdf9ee2b920afb6f430ca6b6bb9f559588cf0dff86e04bd255f9390843cc`.
+- [License at that commit](https://raw.githubusercontent.com/skywind3000/ECDICT/ab22ad36302cafc6349a050e2b60894855208055/LICENSE) SHA-256: `f8552dd246f61a4e064569eae6194a01c6b3d63b03bf27c6ca863593c549ed0f`.
 
-同一提交的`ecdict.mini.csv`实际仅53行，含不少前后缀或化学词，未用它冒充足够的测评题源。完整下载留在已忽略的`artifacts/content-sources/`，应用只携带精选后的JSON与许可证。没有下载或执行上游程序。
+The same revision's `ecdict.mini.csv` has only 53 rows, including many affixes and chemistry terms, and was not used to imply sufficient assessment coverage. Full downloads are kept in the ignored `artifacts/content-sources/` directory. The app carries only selected JSON and license text. No upstream programs were downloaded or executed.
 
-`sources`保存URL、revision、SHA-256、许可和获取日期；每个新增词保存`provenance`、源词元、词频来源和许可。未导入商业词典、例句、文章或音频。ECDICT数据本身仍可能包含需要修订的旧式译法和标音；公开发布前应继续审校，发现问题应按稳定ID修订并更新内容版本。
+`sources` records URLs, revision, SHA-256, licenses, and retrieval date. Each added word records `provenance`, its source lemma, frequency source, and license. No commercial dictionary content, examples, articles, or audio was imported. Source phonetics can contain older notation and still require review. Bundled English definitions were curated during localization. Continue reviewing language quality before public release and correct content by stable ID with a content version update.
 
-## 可重复生成
+## Import and regeneration
 
-在项目根目录运行：
+From the project root:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\import_ecdict.py --download
 ```
 
-已下载时离线重建：
+Rebuild offline after downloading:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\import_ecdict.py
 ```
 
-只报告筛选结果，不写资源：
+Report selection without writing resources:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\import_ecdict.py --dry-run
 ```
 
-脚本固定提交与双哈希，先校验再解析；不随上游分支变化自动替换来源。默认每级新增60词。它从当前内容文件保留`project-original-seed`的原180条对象与目标词集，不能用于覆盖来源不明的其他内容包。重复执行应产生同样的精选词元、义项ID与等级。项目运行和日常学习不需要CSV或网络。
+The script pins the revision and both hashes and verifies them before parsing. It does not follow upstream branch changes automatically. By default, it adds 60 words per level. It retains the current content file's original 180 `project-original-seed` objects and target word sets. Do not use it to overwrite an unrelated content pack of unknown origin. Everyday app use needs neither the CSV nor a network connection.
 
-筛选规则：纯小写单词、有效词元、明确词性、可用的简短中文义组，过滤专名、纯屈折形式、前后缀、不完整译文等。普通新增内容参考`frq`，缺失时参考`bnc`；没有有效词频的普通候选不加入。精选专业术语可以没有词频，但来源与专业领域仍明确记录。原180词不会因重新筛选改变ID、义项、级别或原有同义标记。
+The importer uses ECDICT's English `definition` field and English filters and curated overrides. The earlier selection was originally generated using another source language; English definition coverage and parts-of-speech coverage differ. A fresh import can therefore select different added entries or senses from those in the bundled, individually localized catalog. Review regenerated content and compatibility before replacing a released catalog. Stable ID formats remain the same; rerunning the same importer and inputs should give the same selection.
 
-## 分级与自评
+A verified dry run against the full pinned, hash-checked source produced 1,080 words and 1,180 senses, with 90 words per level at L1–L6 and 60 at L7–L15. It reported no missing basic words, missing specialist terms, or level shortages. This is the regeneration result; the bundled curated English catalog retains the original 1,274 senses.
 
-`levels.json`有15个内部档位，并保留`calibrated: false`。
+Selection requires lowercase word forms, valid lemmas, clear parts of speech, and usable concise definitions. It filters proper names, purely inflected forms, affixes, incomplete definitions, and similar unsuitable entries. Ordinary additions use `frq`, falling back to `bnc`; ordinary candidates without valid frequency data are excluded. Curated specialist terms can lack frequency data, but their source and field remain recorded. Reselecting content does not change the original 180 entries' IDs, senses, levels, or existing synonym tags.
 
-- L1从日常交流基础词定向选取，不简单等同“语料里频率最高的词”。
-- L2—L14结合词频与抽象性启发式。普通候选的词频上限依次参考1000、1700、2600、3800、5400、7500、10000、14000、20000、28000、36000、44000，其后进入L14；部分以“性/学/化”结尾的抽象义项提高一档。这是初始筛选规则，不是经过校准的难度模型。
-- L15独立精选专业术语，当前医学20词、物理14词、化学13词、工程6词、数学7词；同一词可能涉及多个领域，配置里选择一个主要领域。
+## Levels and self-ratings
 
-L15示例：
+`levels.json` defines 15 internal levels and retains `calibrated: false`.
 
-| 领域 | 词元 | 常用中文义项 |
+- L1 deliberately includes basic everyday communication and is not simply the most frequent words in a corpus.
+- L2–L14 use frequency and abstraction heuristics. Ordinary frequency thresholds use 1,000, 1,700, 2,600, 3,800, 5,400, 7,500, 10,000, 14,000, 20,000, 28,000, 36,000, and 44,000 before reaching L14. English abstract-noun heuristics can raise a candidate's level. These are initial selection rules, not a calibrated difficulty model.
+- L15 independently selects specialist terminology: currently 20 medical, 14 physics, 13 chemistry, 6 engineering, and 7 mathematics words. A word can span fields; configuration records one primary field.
+
+Examples from L15:
+
+| Field | Lemma | Meaning |
 | --- | --- | --- |
-| 医学 | electroencephalography | 脑电图记录 |
-| 医学 | immunohistochemistry | 免疫组织化学 |
-| 物理 | magnetohydrodynamics | 电磁流体动力学 |
-| 物理 | antiferromagnetism | 反铁磁性 |
-| 化学 | spectrophotometry | 分光光度法 |
-| 化学 | transesterification | 酯交换反应 |
-| 工程 | photolithography | 光刻法 |
-| 工程 | tribology | 摩擦学 |
-| 数学 | cohomology | 上同调 |
-| 数学 | orthogonality | 正交性 |
+| Medicine | electroencephalography | Recording electrical activity of the brain |
+| Medicine | immunohistochemistry | Identifying substances in tissue using antibodies |
+| Physics | magnetohydrodynamics | Study of conducting fluids in magnetic fields |
+| Physics | antiferromagnetism | Magnetism with opposing adjacent magnetic moments |
+| Chemistry | spectrophotometry | Measuring light intensity at selected wavelengths |
+| Chemistry | transesterification | Exchanging an ester's alcohol component |
+| Engineering | photolithography | Patterning a surface using light |
+| Engineering | tribology | Study of friction, wear, and lubrication |
+| Mathematics | cohomology | An algebraic method for studying topological spaces |
+| Mathematics | orthogonality | Perpendicularity or a corresponding independent relation |
 
-领域背景会影响实际难度，专业人员可能熟悉某些L15词；并不宣称它们是全球最难词汇。旧基础词的分档也可能与新增词的频率档不完全一致；保留这些级别是为了兼容已有学习记录。所有档位均有实际内容，但每档仍是小型精选，不是完整等级词表。
+Field knowledge affects actual difficulty; specialists may know some L15 words well. These are not claimed to be the world's hardest words. Original seed levels may not exactly match the frequency bands of additions. Their levels are retained for compatibility with existing study records. Every level has real content, but each remains a small selection rather than a complete level list.
 
-`estimated_range`是可调整的初始估计范围，与`frequency_rank_max`分别记录，不能把某个语料词频排名当作个人精确掌握词数。`self_ratings`保留8个自评入口，只用于初始推荐；本地人与专业英语学习人不是严格的高低关系。未测过的听力、口语、阅读、写作技能保持未知。词义题结果不构成考试通过保证。
+`estimated_range` is an adjustable initial estimate, recorded separately from `frequency_rank_max`. A corpus frequency rank is not an individual's exact mastered word count. `self_ratings` retains eight onboarding options used only for initial recommendations. Native speakers and professional English learners are not strictly ordered. Untested listening, speaking, reading, and writing remain unknown. Meaning-question results do not guarantee passing an exam.
 
-## 词条、发音与出题
+## Entries, pronunciation, and questions
 
-词条包含`id`、`lemma`、语言、音标、级别、义项、词形、标签、来源与许可。新增词元ID仍为`en.<lemma>`，义项ID为`en.<lemma>.ecdict.<词性标记>`。同一词的其他义项或词性不再次增加独立词数。`forms`只保存来源提供的确认词形，不把派生词自动归为同一词元。
+Entries contain `id`, `lemma`, language, phonetics, level, senses, forms, tags, sources, and licenses. Added lemma IDs use `en.<lemma>` and sense IDs use `en.<lemma>.ecdict.<part-of-speech-tag>`. Other senses or parts of speech of the same word do not increase the distinct word count. `forms` stores only source-confirmed forms and does not automatically merge derived words into a lemma.
 
-原基础词的音标以常见美式宽式标音为主；ECDICT标音按来源保存，以英式和部分旧式记法为主，尚未统一成一套现代IPA格式。缺标音时保持空值，不补造音标。未附带音频录音：本地发音由应用适配提供，缺少对应英语声音时应显示真实缺失状态，保留文字学习。
+Original seed phonetics mostly use common broad American notation. ECDICT phonetics retain the source, mostly British and some older notation, and have not been unified into modern IPA. Missing phonetics stay empty rather than being invented. No audio recordings are included. Local pronunciation is provided by the application adapter; a missing corresponding English voice must show an actual unavailable state while preserving text learning.
 
-新增义项保留短常用中文义组，少量问候义和专业术语的括注作了明确的简化整理。建题时词性必须清楚；同词其他正确义项不能作为错误选项。
+Definitions are concise English explanations. Questions must identify parts of speech clearly. Other correct senses of the same word cannot be used as wrong answers.
 
-中文文字不同也可能近义。原基础词已有11组、27义项的`synonym_group`同义提示。新增词结合中文释义分隔词及一份简短近义表归组，构建题目时排除同义重叠。只凭组名不同不能保证永远不含混，内容修订仍应检查题目与语境。题目无法组成四个互不含混选项时，应换词或明确报告，不能捏造错误中文。
+Different wording can still express similar meanings. The original seed has `synonym_group` hints across 11 groups and 27 senses. Added entries also retain synonym groups. Question construction excludes overlapping synonyms and duplicate meanings. Different group names alone do not guarantee unambiguous questions forever; content revisions must still review meaning and context. If four unambiguous options cannot be formed, choose another word or report the problem instead of inventing a false definition.
 
-当前校验覆盖500个不同词元的500道四选题，以及每级100组随机20词池，共30000道分级题目；均能从各自原始词池组成四选项。这验证题源规模与结构，不代替人工语言审校。
+The prior catalog verification covered 500 four-choice questions using distinct lemmas and 100 random 20-word pools per level, totaling 30,000 graded questions. Each could form four options from its own original pool. This checks source size and structure, not human language quality. English localization requires its own verification; prior results do not by themselves verify the revised definitions.
 
-## 指定目标词集与内容升级
+## Target word sets and content upgrades
 
-正式`cet4`仍为未安装：`complete: false`、空`word_ids`，不能显示100%或授予完成奖励。ECDICT里的`cet4`标签未被取作正式目标词表，也没有将某个筛选子集声称为完整四级范围。
+The official `cet4` list remains uninstalled: `complete: false` and empty `word_ids`. It cannot show 100% or award completion. ECDICT's `cet4` tags were not used as an official target list, and no selected subset is described as complete CET-4 coverage.
 
-`sample-basic`继续使用原来的20个稳定词元，仅验证集合覆盖与结算规则，名称明确标为“非正式四级词表”。目标建立时保存版本与分母快照，内容更新不能改变旧目标。四级只有非空完整词集的每个不同有效词元均已掌握才完成；L4内部难度不等于CET-4。
+`sample-basic` retains the original 20 stable lemmas and tests only set coverage and accounting rules. Its name explicitly identifies it as an unofficial sample, rather than an official CET-4 list. Creating a goal saves its version and denominator snapshots; content updates cannot change existing goals. CET-4 completes only when every distinct valid lemma in a nonempty complete set is mastered. Internal difficulty L4 is not CET-4.
 
-修改显示拼写、释义、图标或排序时保持稳定ID；需要合并词元时提供旧新ID的迁移关系。学习数据库与内容资源分离，替换资源不能清空会话、错题、掌握集合、目标或成就。旧会话使用自己的词条与题目快照，仍能解释当时出现了什么。
+Keep stable IDs when changing spelling, definitions, icons, or display order. Merging lemmas needs an old-to-new ID migration. The study database and content resources are separate; replacing resources must not clear sessions, mistakes, mastered words, goals, or achievements. Old sessions keep their own word and question snapshots, preserving the evidence of what appeared at the time.
 
-## 成就与后续内容
+Legacy stock definitions, prompts, and result text are translated only when presented. The saved originals, answers, scoring, and completion records remain intact, including during export and import validation. Exact stock-text mappings provide English display without altering historical evidence. Personal names and user-written content are retained. The interface text loader recognizes saved copies of old defaults and adopts the corresponding English defaults while preserving personal edits.
 
-`achievements.json`仍保留首次开始，以及累计完成新轮次练习100、200、500、1000、2000、3000词次的定义。旧轮重做可增加练习历史，不增加该成就指标；练习词次不等于净新增词数。改标题和描述时保留成就ID，替换图标或模型不能删除获得记录。
+## Achievements and future content
 
-文章、阅读题、写作题、历史趣闻与其他语言内容不包含在本次词库扩充中。以后分别记录其稳定ID、版本、答案与依据、来源、许可及所需署名，不能把占位入口算作已实现功能。
+`achievements.json` retains the first learning start and milestones for 100, 200, 500, 1,000, 2,000, and 3,000 word practices in newly completed sessions. Replaying old sessions can add practice history without increasing this achievement metric. Practice word counts are not net new words. Keep achievement IDs when editing titles and descriptions. Replacing icons or models must not delete earned records.
+
+Articles, reading questions, writing prompts, historical facts, and other language content are outside this catalog expansion. Later content must separately record stable IDs, versions, answers and evidence, sources, licenses, and required attribution. Placeholder entry points do not count as implemented features.
